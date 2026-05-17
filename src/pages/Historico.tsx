@@ -2,7 +2,7 @@ import { FileDown, FileSpreadsheet } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { OrcamentoFilters } from '../components/orcamento/OrcamentoFilters'
-import { OrcamentoTable } from '../components/orcamento/OrcamentoTable'
+import { OrcamentoList } from '../components/orcamento/OrcamentoList'
 import { exportOrcamentosCsv } from '../lib/csv'
 import { downloadBlob, downloadText } from '../lib/downloads'
 import { DEFAULT_FILTERS, useOrcamentos } from '../hooks/useOrcamentos'
@@ -59,7 +59,7 @@ export function Historico() {
         {error ? <div className="error-state">{error}</div> : null}
         {!loading ? (
           <>
-            <OrcamentoTable
+            <OrcamentoList
               orcamentos={pageItems}
               onDelete={actions.setPendingDelete}
               onDuplicate={actions.duplicate}
