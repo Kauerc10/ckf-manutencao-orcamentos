@@ -1,6 +1,6 @@
-import { FileClock, LayoutDashboard, LogOut, Plus, Wrench } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Wrench, X } from 'lucide-react'
+import { type ReactNode, useCallback, useEffect, useState } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { EMPRESA } from '../../lib/constants'
 import { useAuthStore } from '../../stores/authStore'
@@ -11,9 +11,18 @@ type Props = {
 
 export function AppLayout({ children }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
   const profile = useAuthStore((state) => state.profile)
   const mode = useAuthStore((state) => state.mode)
   const logout = useAuthStore((state) => state.logout)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Close the mobile drawer whenever the route changes
+  useEffect(() => {
+    setDrawerOpen(false)
+  }, [location.pathname])
+
+  const closeDrawer = useCallback(() => setDrawerOpen(false), [])
 
   async function handleLogout() {
     await logout()
@@ -23,7 +32,8 @@ export function AppLayout({ children }: Props) {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      {/* ── Desktop sidebar (hidden on mobile via CSS) ── */}
+      <aside className="sidebar desktop-only">
         <div className="brand-block">
           <div className="brand-mark">
             <Wrench size={22} />
@@ -62,19 +72,99 @@ export function AppLayout({ children }: Props) {
         </div>
       </aside>
 
+      {/* ── Mobile header (hidden on desktop via CSS) ── */}
+      <header className="mobile-header mobile-only">
+        <button className="mobile-menu-btn" type="button" onClick={() => setDrawerOpen(true)} aria-label="Abrir menu">
+          <Menu size={22} />
+        </button>
+        <div className="mobile-brand">
+          <div className="brand-mark brand-mark-sm">
+            <Wrench size={16} />
+          </div>
+          <strong>CKF Sistema</strong>
+        </div>
+        <div className="mobile-header-spacer" />
+      </header>
+
+      {/* ── Mobile drawer (user info + logout) ── */}
+      {drawerOpen ? (
+        <div className="drawer-backdrop mobile-only" onClick={closeDrawer} role="presentation">
+          <aside className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-top">
+              <div className="brand-block">
+                <div className="brand-mark">
+                  <Wrench size={22} />
+                </div>
+                <div>
+                  <strong>CKF Sistema</strong>
+                  <span>{EMPRESA.nome}</span>
+                </div>
+              </div>
+              <button className="mobile-menu-btn" type="button" onClick={closeDrawer} aria-label="Fechar menu">
+                <X size={22} />
+              </button>
+            </div>
+
+            <nav className="drawer-nav" aria-label="Menu mobile">
+              <NavLink to="/" end>
+                <LayoutDashboard size={18} />
+                Dashboard
+              </NavLink>
+              <NavLink to="/orcamentos/novo">
+                <Plus size={18} />
+                Novo orçamento
+              </NavLink>
+              <NavLink to="/historico">
+                <FileClock size={18} />
+                Histórico
+              </NavLink>
+            </nav>
+
+            <div className="drawer-footer">
+              <div className="user-card">
+                <strong>{profile?.nome}</strong>
+                <span>{profile?.email}</span>
+                {mode === 'local' ? <em>Modo local sem Supabase</em> : null}
+              </div>
+              <button className="sidebar-logout" type="button" onClick={handleLogout}>
+                <LogOut size={17} />
+                Sair
+              </button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
+
+      {/* ── Main content ── */}
       <main className="main-shell">
         <header className="topbar">
           <div>
             <span className="eyebrow">Sistema interno</span>
             <h1>Orçamentos CK Manutenção</h1>
           </div>
-          <button className="primary-button" type="button" onClick={() => navigate('/orcamentos/novo')}>
+          <button className="primary-button desktop-only" type="button" onClick={() => navigate('/orcamentos/novo')}>
             <Plus size={18} />
             Novo orçamento
           </button>
         </header>
         {children}
       </main>
+
+      {/* ── Mobile bottom navigation (hidden on desktop via CSS) ── */}
+      <nav className="mobile-bottom-nav mobile-only" aria-label="Navegação rápida">
+        <NavLink to="/" end className="bottom-nav-item">
+          <LayoutDashboard size={20} />
+          <span>Início</span>
+        </NavLink>
+        <NavLink to="/orcamentos/novo" className="bottom-nav-item">
+          <Plus size={20} />
+          <span>Novo</span>
+        </NavLink>
+        <NavLink to="/historico" className="bottom-nav-item">
+          <FileClock size={20} />
+          <span>Histórico</span>
+        </NavLink>
+      </nav>
     </div>
   )
 }

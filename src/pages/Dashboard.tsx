@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { OrcamentoFilters } from '../components/orcamento/OrcamentoFilters'
-import { OrcamentoTable } from '../components/orcamento/OrcamentoTable'
+import { OrcamentoList } from '../components/orcamento/OrcamentoList'
 import { formatCurrency } from '../lib/formatters'
 import { DEFAULT_FILTERS, useOrcamentos } from '../hooks/useOrcamentos'
 import { useOrcamentoActions } from '../hooks/useOrcamentoActions'
@@ -53,7 +53,7 @@ export function Dashboard() {
         {loading ? <div className="skeleton-block">Carregando orçamentos...</div> : null}
         {error ? <div className="error-state">{error}</div> : null}
         {!loading ? (
-          <OrcamentoTable
+          <OrcamentoList
             compact
             orcamentos={filtered.slice(0, 20)}
             onDelete={actions.setPendingDelete}
