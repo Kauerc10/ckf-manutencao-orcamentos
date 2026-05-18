@@ -63,9 +63,11 @@ export function OrcamentoEditor({ existing }: Props) {
   const [saving, setSaving] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const total = useMemo(() => calculateGeneralTotal(draft.itens), [draft.itens])
+  const isDeleted = existing?.status === 'excluido'
 
   useEffect(() => {
     if (existing || !settingsLoaded) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDraft((current) => ({
       ...current,
       validadeDias:
@@ -87,6 +89,10 @@ export function OrcamentoEditor({ existing }: Props) {
     criadoPorNome: existing?.criadoPorNome ?? profile?.nome ?? '',
     criadoEm: existing?.criadoEm ?? new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
+    excluidoEm: existing?.excluidoEm ?? null,
+    excluidoPor: existing?.excluidoPor ?? null,
+    excluidoPorNome: existing?.excluidoPorNome ?? null,
+    excluidoMotivo: existing?.excluidoMotivo ?? null,
     itens: draft.itens.map((item) => ({ ...item, valorTotal: calculateItemTotal(item) })),
   }
 
@@ -120,6 +126,11 @@ export function OrcamentoEditor({ existing }: Props) {
 
   async function handleSave(viewAfterSave: boolean) {
     if (!profile) return
+    if (isDeleted) {
+      toast.error('Orcamentos excluidos nao podem ser editados.')
+      return
+    }
+
     const payload = { ...draft, total, itens: preview.itens }
     const result = orcamentoFormSchema.safeParse(payload)
     if (!result.success) {
@@ -157,6 +168,12 @@ export function OrcamentoEditor({ existing }: Props) {
             </div>
           ) : null}
 
+          {isDeleted ? (
+            <div className="warning-banner">
+              Este orçamento foi marcado como excluído. Ele fica disponível apenas para consulta e auditoria.
+            </div>
+          ) : null}
+
           <div className="form-grid">
             <label>
               Data
@@ -185,6 +202,7 @@ export function OrcamentoEditor({ existing }: Props) {
                 <option value="aprovado">Aprovado</option>
                 <option value="recusado">Recusado</option>
                 <option value="cancelado">Cancelado</option>
+                {isDeleted ? <option value="excluido">Excluído</option> : null}
               </select>
             </label>
             <label>
@@ -199,7 +217,7 @@ export function OrcamentoEditor({ existing }: Props) {
 
           <div className="items-toolbar">
             <h3>Itens</h3>
-            <button className="secondary-button" type="button" onClick={addItem} disabled={draft.itens.length >= MAX_ITEM_ROWS}>
+            <button className="secondary-button" type="button" onClick={addItem} disabled={isDeleted || draft.itens.length >= MAX_ITEM_ROWS}>
               <Plus size={16} />
               Adicionar linha
             </button>
@@ -236,7 +254,7 @@ export function OrcamentoEditor({ existing }: Props) {
                   onChange={(event) => updateItem(index, { valorTotal: fromInputNumber(event.target.value) ?? 0 })}
                   disabled={item.quantidade !== null && item.valorUnitario !== null}
                 />
-                <button className="ghost-icon" type="button" onClick={() => removeItem(index)} aria-label="Remover item">
+                <button className="ghost-icon" type="button" onClick={() => removeItem(index)} aria-label="Remover item" disabled={isDeleted}>
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -258,11 +276,11 @@ export function OrcamentoEditor({ existing }: Props) {
               <button className="secondary-button" type="button" onClick={() => navigate(-1)}>
                 Cancelar
               </button>
-              <button className="secondary-button" type="button" disabled={saving} onClick={() => handleSave(false)}>
+              <button className="secondary-button" type="button" disabled={saving || isDeleted} onClick={() => handleSave(false)}>
                 <Save size={16} />
                 Salvar rascunho
               </button>
-              <button className="primary-button" type="button" disabled={saving} onClick={() => handleSave(true)}>
+              <button className="primary-button" type="button" disabled={saving || isDeleted} onClick={() => handleSave(true)}>
                 Salvar e visualizar
               </button>
             </div>

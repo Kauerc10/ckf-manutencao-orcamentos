@@ -22,6 +22,7 @@ export function Configuracoes() {
   const [form, setForm] = useState<SystemSettings>(() => cloneSettings(settings))
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(cloneSettings(settings))
   }, [settings])
 

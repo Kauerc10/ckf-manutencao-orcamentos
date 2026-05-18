@@ -3,6 +3,7 @@ import {
   calculateGeneralTotal,
   calculateItemTotal,
   createDuplicateDraft,
+  createItemSyncPlan,
   normalizeItemsForDocument,
 } from './orcamento'
 import { DOCUMENT_ITEM_ROW_COUNT } from './constants'
@@ -62,5 +63,33 @@ describe('orcamento business rules', () => {
     expect(duplicate).not.toHaveProperty('id')
     expect(duplicate).not.toHaveProperty('numero')
     expect(duplicate.itens[0]).not.toHaveProperty('id')
+  })
+
+  it('plans item edits without replacing every persisted row', () => {
+    const plan = createItemSyncPlan(['i1', 'i2'], [
+      { id: 'i1', quantidade: 2, descricao: 'Item atualizado', valorUnitario: 100, valorTotal: 0 },
+      { quantidade: null, descricao: 'Item novo', valorUnitario: null, valorTotal: 75 },
+    ])
+
+    expect(plan.updates).toEqual([
+      {
+        id: 'i1',
+        ordem: 1,
+        quantidade: 2,
+        descricao: 'Item atualizado',
+        valorUnitario: 100,
+        valorTotal: 200,
+      },
+    ])
+    expect(plan.inserts).toEqual([
+      {
+        ordem: 2,
+        quantidade: null,
+        descricao: 'Item novo',
+        valorUnitario: null,
+        valorTotal: 75,
+      },
+    ])
+    expect(plan.deleteIds).toEqual(['i2'])
   })
 })

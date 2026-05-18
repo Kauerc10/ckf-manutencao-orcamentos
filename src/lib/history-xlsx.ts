@@ -16,6 +16,9 @@ export async function createHistoricoWorkbook(orcamentos: Orcamento[]): Promise<
     { header: 'Criado por', key: 'criadoPor', width: 24 },
     { header: 'Criado em', key: 'criadoEm', width: 24 },
     { header: 'Atualizado em', key: 'atualizadoEm', width: 24 },
+    { header: 'Excluído por', key: 'excluidoPor', width: 24 },
+    { header: 'Excluído em', key: 'excluidoEm', width: 24 },
+    { header: 'Motivo da exclusão', key: 'excluidoMotivo', width: 36 },
   ]
 
   sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }
@@ -31,6 +34,9 @@ export async function createHistoricoWorkbook(orcamentos: Orcamento[]): Promise<
       criadoPor: orcamento.criadoPorNome,
       criadoEm: orcamento.criadoEm,
       atualizadoEm: orcamento.atualizadoEm,
+      excluidoPor: orcamento.excluidoPorNome ?? '',
+      excluidoEm: orcamento.excluidoEm ?? '',
+      excluidoMotivo: orcamento.excluidoMotivo ?? '',
     })
   })
 

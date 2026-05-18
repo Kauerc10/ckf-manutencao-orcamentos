@@ -215,7 +215,7 @@ Exemplo:
 
 ```env
 VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
+VITE_SUPABASE_PUBLISHABLE_KEY=
 ```
 
 > Nunca publique arquivos `.env`, `.env.local`, `.env.production` ou qualquer arquivo contendo credenciais reais.

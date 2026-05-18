@@ -1,4 +1,5 @@
 import type { OrcamentoFilters, OrcamentoStatus } from '../../types'
+import { STATUS_LABELS } from '../../lib/constants'
 
 type Props = {
   filters: OrcamentoFilters
@@ -6,7 +7,15 @@ type Props = {
   creators: Array<{ id: string; nome: string }>
 }
 
-const statuses: Array<OrcamentoStatus | 'todos'> = ['todos', 'rascunho', 'enviado', 'aprovado', 'recusado', 'cancelado']
+const statuses: Array<OrcamentoStatus | 'todos'> = [
+  'todos',
+  'rascunho',
+  'enviado',
+  'aprovado',
+  'recusado',
+  'cancelado',
+  'excluido',
+]
 
 export function OrcamentoFilters({ filters, onChange, creators }: Props) {
   return (
@@ -27,7 +36,7 @@ export function OrcamentoFilters({ filters, onChange, creators }: Props) {
         >
           {statuses.map((status) => (
             <option key={status} value={status}>
-              {status === 'todos' ? 'Todos' : status}
+              {status === 'todos' ? 'Todos' : STATUS_LABELS[status]}
             </option>
           ))}
         </select>

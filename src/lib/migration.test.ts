@@ -36,4 +36,16 @@ describe('supabase migration contract', () => {
     expect(migrationSql).toContain('revoke update on table public.profiles from authenticated')
     expect(migrationSql).toContain('grant update (nome) on table public.profiles to authenticated')
   })
+
+  it('keeps deleted quotations auditable and blocks physical quotation deletes', () => {
+    expect(migrationSql).toContain("alter type public.orcamento_status add value if not exists 'excluido'")
+    expect(migrationSql).toContain('add column if not exists excluido_em timestamptz')
+    expect(migrationSql).toContain('add column if not exists excluido_por uuid references public.profiles(id)')
+    expect(migrationSql).toContain('add column if not exists excluido_motivo text')
+    expect(migrationSql).toContain('orcamentos_exclusao_audit_check')
+    expect(migrationSql).toContain('drop policy if exists "active users can delete quotations"')
+    expect(migrationSql).toContain('revoke delete on table public.orcamentos from authenticated')
+    expect(migrationSql).toContain("new.status = 'excluido'")
+    expect(migrationSql).toContain('private.is_admin()')
+  })
 })
