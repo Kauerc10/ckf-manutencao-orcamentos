@@ -11,7 +11,7 @@ export function Login() {
   const loading = useAuthStore((state) => state.loading)
   const login = useAuthStore((state) => state.login)
   const mode = useAuthStore((state) => state.mode)
-  const [email, setEmail] = useState(() => (mode === 'local' ? 'demo@ckfmanutencao.local' : ''))
+  const [identifier, setIdentifier] = useState(() => (mode === 'local' ? 'demo@ckfmanutencao.local' : ''))
   const [password, setPassword] = useState(() => (mode === 'local' ? 'demo-local' : ''))
 
   if (profile) {
@@ -21,7 +21,7 @@ export function Login() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     try {
-      await login(email, password)
+      await login(identifier, password)
       toast.success('Entrada confirmada.')
       navigate('/')
     } catch (err) {
@@ -39,8 +39,8 @@ export function Login() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label>
-            Email
-            <input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
+            Email ou Usuário
+            <input type="text" placeholder="Digite seu e-mail ou usuário" required value={identifier} onChange={(event) => setIdentifier(event.target.value)} />
           </label>
           <label>
             Senha

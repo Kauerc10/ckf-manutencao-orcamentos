@@ -10,8 +10,22 @@ type AuthState = {
   loading: boolean
   mode: 'supabase' | 'local'
   bootstrap: () => Promise<void>
-  login: (email: string, password: string) => Promise<void>
+  login: (identifier: string, password: string) => Promise<void>
   logout: () => Promise<void>
+}
+
+async function resolveEmail(identifier: string): Promise<string> {
+  if (identifier.includes('@')) return identifier
+  if (!supabase) throw new Error('Supabase não configurado.')
+
+  const { data, error } = await supabase.rpc('get_email_by_username', {
+    p_username: identifier,
+  })
+  
+  if (error) throw new Error('Erro ao buscar usuário.')
+  if (!data) throw new Error('Usuário não encontrado.')
+  
+  return data as string
 }
 
 async function loadSupabaseProfile(userId: string): Promise<Profile> {
@@ -56,11 +70,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     const raw = localStorage.getItem(DEMO_AUTH_KEY)
     set({ profile: raw ? (JSON.parse(raw) as Profile) : null, loading: false, mode: 'local' })
   },
-  login: async (email, password) => {
+  login: async (identifier, password) => {
     set({ loading: true })
 
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      try {
+        const email = await resolveEmail(identifier)
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         set({ loading: false })
         throw error
@@ -72,9 +88,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       const profile = await loadSupabaseProfile(data.user.id)
       set({ profile, loading: false, mode: 'supabase' })
       return
+      } catch (error) {
+        set({ loading: false })
+        throw error
+      }
     }
 
-    const profile = { ...DEMO_PROFILE, email: email || DEMO_PROFILE.email }
+    const email = identifier.includes('@') ? identifier : DEMO_PROFILE.email
+    const profile = { ...DEMO_PROFILE, email }
     localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify(profile))
     set({ profile, loading: false, mode: 'local' })
   },
