@@ -3,9 +3,10 @@ import type { Orcamento, Profile } from '../types'
 
 export const DEMO_PROFILE: Profile = {
   id: 'demo-user',
-  nome: 'Equipe CK',
-  email: 'demo@ckmanutencao.local',
+  nome: 'Equipe CKF',
+  email: 'demo@ckfmanutencao.local',
   ativo: true,
+  role: 'admin',
   criadoEm: new Date().toISOString(),
 }
 

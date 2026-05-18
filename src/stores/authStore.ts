@@ -26,6 +26,7 @@ async function loadSupabaseProfile(userId: string): Promise<Profile> {
     nome: data.nome,
     email: data.email,
     ativo: data.ativo,
+    role: data.role ?? 'usuario',
     criadoEm: data.criado_em,
   }
 }

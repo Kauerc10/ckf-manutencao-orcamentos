@@ -11,6 +11,7 @@ export type Database = {
           nome: string
           email: string
           ativo: boolean
+          role: 'admin' | 'usuario'
           criado_em: string
           atualizado_em: string
         }
@@ -19,11 +20,55 @@ export type Database = {
           nome: string
           email: string
           ativo?: boolean
+          role?: 'admin' | 'usuario'
         }
         Update: {
           nome?: string
           email?: string
           ativo?: boolean
+          role?: 'admin' | 'usuario'
+        }
+      }
+      system_settings: {
+        Row: {
+          id: 'default'
+          empresa_nome: string
+          empresa_email: string
+          empresa_cnpj: string
+          empresa_telefone: string
+          empresa_regiao: string
+          orcamento_validade_padrao: number
+          orcamento_observacoes_padrao: string
+          preview_densidade: 'compacta' | 'confortavel'
+          mostrar_logo_documentos: boolean
+          criado_em: string
+          atualizado_em: string
+          atualizado_por: string | null
+        }
+        Insert: {
+          id?: 'default'
+          empresa_nome?: string
+          empresa_email?: string
+          empresa_cnpj?: string
+          empresa_telefone?: string
+          empresa_regiao?: string
+          orcamento_validade_padrao?: number
+          orcamento_observacoes_padrao?: string
+          preview_densidade?: 'compacta' | 'confortavel'
+          mostrar_logo_documentos?: boolean
+          atualizado_por?: string | null
+        }
+        Update: {
+          empresa_nome?: string
+          empresa_email?: string
+          empresa_cnpj?: string
+          empresa_telefone?: string
+          empresa_regiao?: string
+          orcamento_validade_padrao?: number
+          orcamento_observacoes_padrao?: string
+          preview_densidade?: 'compacta' | 'confortavel'
+          mostrar_logo_documentos?: boolean
+          atualizado_por?: string | null
         }
       }
       orcamentos: {

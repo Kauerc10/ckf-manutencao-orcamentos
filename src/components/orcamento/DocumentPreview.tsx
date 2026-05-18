@@ -1,26 +1,40 @@
 import type { CSSProperties } from 'react'
-import { DOCUMENT_ITEM_ROW_COUNT, EMPRESA } from '../../lib/constants'
+import { BRAND_ASSETS, DOCUMENT_ITEM_ROW_COUNT } from '../../lib/constants'
 import { formatCurrency, formatDateBR } from '../../lib/formatters'
 import { normalizeItemsForDocument } from '../../lib/orcamento'
-import type { Orcamento } from '../../types'
+import { useSystemSettingsStore } from '../../stores/systemSettingsStore'
+import type { Orcamento, SystemSettings } from '../../types'
 
 type Props = {
   orcamento: Orcamento
   compact?: boolean
+  settingsOverride?: SystemSettings
 }
 
-export function DocumentPreview({ orcamento, compact = false }: Props) {
+export function DocumentPreview({ orcamento, compact = false, settingsOverride }: Props) {
+  const storedSettings = useSystemSettingsStore((state) => state.settings)
+  const settings = settingsOverride ?? storedSettings
   const rows = normalizeItemsForDocument(orcamento.itens)
+  const classes = [
+    'document-preview',
+    compact ? 'compact' : '',
+    settings.previewDensidade === 'confortavel' ? 'density-comfort' : 'density-compact',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
-    <section className={compact ? 'document-preview compact' : 'document-preview'} aria-label="Preview do orçamento">
+    <section className={classes} aria-label="Preview do orçamento">
       <div className="document-header">
-        <div className="document-logo">CK</div>
-        <h2>{EMPRESA.nome}</h2>
-        <p>Email: {EMPRESA.email}</p>
-        <p>CNPJ: {EMPRESA.cnpj}</p>
-        <p>Telefone: {EMPRESA.telefone}</p>
-        <p>{EMPRESA.regiao}</p>
+        {settings.mostrarLogoDocumentos ? (
+          <img className="document-brand-logo" src={BRAND_ASSETS.logoHorizontalWhiteAmberPng} alt="CKF Manutenção" />
+        ) : (
+          <div className="document-logo">CKF</div>
+        )}
+        <p>Email: {settings.empresa.email}</p>
+        <p>CNPJ: {settings.empresa.cnpj}</p>
+        <p>Telefone: {settings.empresa.telefone}</p>
+        <p>{settings.empresa.regiao}</p>
       </div>
 
       <div className="document-meta">

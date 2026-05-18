@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { EMPRESA } from '../lib/constants'
+import { BRAND_ASSETS } from '../lib/constants'
 import { useAuthStore } from '../stores/authStore'
 
 export function Login() {
@@ -11,7 +11,7 @@ export function Login() {
   const loading = useAuthStore((state) => state.loading)
   const login = useAuthStore((state) => state.login)
   const mode = useAuthStore((state) => state.mode)
-  const [email, setEmail] = useState(() => (mode === 'local' ? 'demo@ckmanutencao.local' : ''))
+  const [email, setEmail] = useState(() => (mode === 'local' ? 'demo@ckfmanutencao.local' : ''))
   const [password, setPassword] = useState(() => (mode === 'local' ? 'demo-local' : ''))
 
   if (profile) {
@@ -33,8 +33,7 @@ export function Login() {
     <main className="login-page">
       <section className="login-panel">
         <div className="login-brand">
-          <div className="document-logo">CK</div>
-          <h1>{EMPRESA.nome}</h1>
+          <img className="login-logo" src={BRAND_ASSETS.logoHorizontalWhiteAmberPng} alt="CKF Manutenção" />
           <p>Sistema interno de orçamentos</p>
         </div>
 

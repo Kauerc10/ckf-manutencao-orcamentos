@@ -6,11 +6,13 @@ import { downloadBlob } from '../lib/downloads'
 import { toOrcamentoFilename } from '../lib/formatters'
 import { createDuplicateDraft } from '../lib/orcamento'
 import { useAuthStore } from '../stores/authStore'
+import { useSystemSettingsStore } from '../stores/systemSettingsStore'
 import type { Orcamento } from '../types'
 
 export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) {
   const navigate = useNavigate()
   const profile = useAuthStore((state) => state.profile)
+  const settings = useSystemSettingsStore((state) => state.settings)
   const [pendingDelete, setPendingDelete] = useState<Orcamento | null>(null)
 
   async function refresh() {
@@ -38,14 +40,14 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
       import('@react-pdf/renderer'),
       import('../components/pdf/OrcamentoPDF'),
     ])
-    const blob = await pdf(<OrcamentoPDF orcamento={orcamento} />).toBlob()
+    const blob = await pdf(<OrcamentoPDF orcamento={orcamento} settings={settings} />).toBlob()
     downloadBlob(blob, toOrcamentoFilename(orcamento.numero, orcamento.servicoCliente, 'pdf'))
     toast.success('PDF gerado.')
   }
 
   async function downloadXlsx(orcamento: Orcamento) {
     const { createOrcamentoWorkbook, workbookToBlob } = await import('../lib/xlsx')
-    const workbook = await createOrcamentoWorkbook(orcamento)
+    const workbook = await createOrcamentoWorkbook(orcamento, settings)
     const blob = await workbookToBlob(workbook)
     downloadBlob(blob, toOrcamentoFilename(orcamento.numero, orcamento.servicoCliente, 'xlsx'))
     toast.success('XLSX gerado.')

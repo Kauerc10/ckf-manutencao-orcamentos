@@ -17,6 +17,7 @@ describe('formatters', () => {
   })
 
   it('uses the official corrected company CNPJ', () => {
+    expect(EMPRESA.nome).toBe('CKF MANUTENÇÃO')
     expect(EMPRESA.cnpj).toBe('57.461.028/0001-43')
   })
 

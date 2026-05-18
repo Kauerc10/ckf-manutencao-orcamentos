@@ -1,8 +1,8 @@
 import ExcelJS from 'exceljs'
-import { DOCUMENT_ITEM_ROW_COUNT, EMPRESA } from './constants'
+import { BRAND_ASSETS, DEFAULT_SYSTEM_SETTINGS, DOCUMENT_ITEM_ROW_COUNT } from './constants'
 import { formatDateBR } from './formatters'
 import { normalizeItemsForDocument } from './orcamento'
-import type { Orcamento } from '../types'
+import type { Orcamento, SystemSettings } from '../types'
 
 const thinBorder: Partial<ExcelJS.Borders> = {
   top: { style: 'thin' },
@@ -11,7 +11,26 @@ const thinBorder: Partial<ExcelJS.Borders> = {
   right: { style: 'thin' },
 }
 
-export async function createOrcamentoWorkbook(orcamento: Orcamento): Promise<ExcelJS.Workbook> {
+async function imageUrlToBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) return null
+    const blob = await response.blob()
+    return await new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(typeof reader.result === 'string' ? reader.result : null)
+      reader.onerror = () => resolve(null)
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    return null
+  }
+}
+
+export async function createOrcamentoWorkbook(
+  orcamento: Orcamento,
+  settings: SystemSettings = DEFAULT_SYSTEM_SETTINGS,
+): Promise<ExcelJS.Workbook> {
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'CKF Sistema'
   workbook.created = new Date()
@@ -46,21 +65,43 @@ export async function createOrcamentoWorkbook(orcamento: Orcamento): Promise<Exc
   sheet.mergeCells('A6:D6')
   sheet.mergeCells('A7:D7')
 
-  sheet.getCell('A1').value = EMPRESA.nome
-  sheet.getCell('A4').value = `E-mail: ${EMPRESA.email}`
-  sheet.getCell('A5').value = `CNPJ: ${EMPRESA.cnpj}`
-  sheet.getCell('A6').value = `Telefone: ${EMPRESA.telefone}`
-  sheet.getCell('A7').value = EMPRESA.regiao
+  sheet.getCell('A1').value = settings.empresa.nome
+  sheet.getCell('A4').value = `E-mail: ${settings.empresa.email}`
+  sheet.getCell('A5').value = `CNPJ: ${settings.empresa.cnpj}`
+  sheet.getCell('A6').value = `Telefone: ${settings.empresa.telefone}`
+  sheet.getCell('A7').value = settings.empresa.regiao
 
   for (let row = 1; row <= 7; row += 1) {
     const current = sheet.getRow(row)
     current.height = row === 1 ? 33 : 15
     current.eachCell({ includeEmpty: true }, (cell) => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF111111' } }
-      cell.font = { name: row === 1 ? 'Calibri' : 'Arial', size: row === 1 ? 16 : 9, bold: true, color: { argb: 'FFFFFFFF' } }
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0C0C0D' } }
+      cell.font = {
+        name: row === 1 ? 'Calibri' : 'Arial',
+        size: row === 1 ? 16 : 9,
+        bold: true,
+        color: { argb: 'FFE6E8EA' },
+      }
       cell.alignment = { horizontal: 'center', vertical: 'middle' }
     })
   }
+
+  if (settings.mostrarLogoDocumentos) {
+    const logo = await imageUrlToBase64(BRAND_ASSETS.logoHorizontalWhiteAmberPng)
+    if (logo) {
+      const imageId = workbook.addImage({ base64: logo, extension: 'png' })
+      sheet.addImage(imageId, {
+        tl: { col: 0.62, row: 0.28 },
+        ext: { width: 235, height: 63 },
+        editAs: 'oneCell',
+      })
+      sheet.getCell('A1').value = ''
+    }
+  }
+
+  sheet.getRow(8).height = 4
+  sheet.mergeCells('A8:D8')
+  sheet.getCell('A8').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5A400' } }
 
   sheet.getCell('A9').value = 'Data:'
   sheet.getCell('B9').value = formatDateBR(orcamento.dataOrcamento)
@@ -78,6 +119,9 @@ export async function createOrcamentoWorkbook(orcamento: Orcamento): Promise<Exc
       cell.border = thinBorder
       cell.font = { name: 'Calibri', size: row === 11 ? 8 : 11, bold: row === 11 }
       cell.alignment = { horizontal: row === 11 ? 'center' : 'left', vertical: 'middle' }
+      if (row === 11) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E8EA' } }
+      }
     })
   }
 

@@ -1,8 +1,8 @@
-import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Wrench, X } from 'lucide-react'
+import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, X } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { EMPRESA } from '../../lib/constants'
+import { BRAND_ASSETS } from '../../lib/constants'
 import { useAuthStore } from '../../stores/authStore'
 
 type Props = {
@@ -35,13 +35,7 @@ export function AppLayout({ children }: Props) {
       {/* ── Desktop sidebar (hidden on mobile via CSS) ── */}
       <aside className="sidebar desktop-only">
         <div className="brand-block">
-          <div className="brand-mark">
-            <Wrench size={22} />
-          </div>
-          <div>
-            <strong>CKF Sistema</strong>
-            <span>{EMPRESA.nome}</span>
-          </div>
+          <img className="sidebar-logo" src={BRAND_ASSETS.symbolWhiteAmberPng} alt="CKF Manutenção" />
         </div>
 
         <nav className="sidebar-nav" aria-label="Principal">
@@ -60,9 +54,16 @@ export function AppLayout({ children }: Props) {
         </nav>
 
         <div className="sidebar-footer">
+          <nav className="sidebar-nav sidebar-nav-secondary" aria-label="Sistema">
+            <NavLink to="/configuracoes">
+              <Settings size={18} />
+              Configurações
+            </NavLink>
+          </nav>
           <div className="user-card">
             <strong>{profile?.nome}</strong>
             <span>{profile?.email}</span>
+            {profile?.role === 'admin' ? <em>Administrador</em> : null}
             {mode === 'local' ? <em>Modo local sem Supabase</em> : null}
           </div>
           <button className="sidebar-logout" type="button" onClick={handleLogout}>
@@ -78,10 +79,7 @@ export function AppLayout({ children }: Props) {
           <Menu size={22} />
         </button>
         <div className="mobile-brand">
-          <div className="brand-mark brand-mark-sm">
-            <Wrench size={16} />
-          </div>
-          <strong>CKF Sistema</strong>
+          <img className="mobile-logo" src={BRAND_ASSETS.symbolWhiteAmberPng} alt="CKF" />
         </div>
         <div className="mobile-header-spacer" />
       </header>
@@ -92,13 +90,7 @@ export function AppLayout({ children }: Props) {
           <aside className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-top">
               <div className="brand-block">
-                <div className="brand-mark">
-                  <Wrench size={22} />
-                </div>
-                <div>
-                  <strong>CKF Sistema</strong>
-                  <span>{EMPRESA.nome}</span>
-                </div>
+                <img className="sidebar-logo drawer-logo" src={BRAND_ASSETS.symbolWhiteAmberPng} alt="CKF Manutenção" />
               </div>
               <button className="mobile-menu-btn" type="button" onClick={closeDrawer} aria-label="Fechar menu">
                 <X size={22} />
@@ -121,9 +113,16 @@ export function AppLayout({ children }: Props) {
             </nav>
 
             <div className="drawer-footer">
+              <nav className="drawer-nav drawer-nav-secondary" aria-label="Sistema mobile">
+                <NavLink to="/configuracoes">
+                  <Settings size={18} />
+                  Configurações
+                </NavLink>
+              </nav>
               <div className="user-card">
                 <strong>{profile?.nome}</strong>
                 <span>{profile?.email}</span>
+                {profile?.role === 'admin' ? <em>Administrador</em> : null}
                 {mode === 'local' ? <em>Modo local sem Supabase</em> : null}
               </div>
               <button className="sidebar-logout" type="button" onClick={handleLogout}>
@@ -140,7 +139,7 @@ export function AppLayout({ children }: Props) {
         <header className="topbar">
           <div>
             <span className="eyebrow">Sistema interno</span>
-            <h1>Orçamentos CK Manutenção</h1>
+            <h1>Orçamentos CKF Manutenção</h1>
           </div>
           <button className="primary-button desktop-only" type="button" onClick={() => navigate('/orcamentos/novo')}>
             <Plus size={18} />

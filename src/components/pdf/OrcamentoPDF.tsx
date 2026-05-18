@@ -1,28 +1,39 @@
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
-import { EMPRESA } from '../../lib/constants'
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { BRAND_ASSETS, DEFAULT_SYSTEM_SETTINGS } from '../../lib/constants'
 import { formatCurrency, formatDateBR } from '../../lib/formatters'
 import { normalizeItemsForDocument } from '../../lib/orcamento'
-import type { Orcamento } from '../../types'
+import type { Orcamento, SystemSettings } from '../../types'
 
 const styles = StyleSheet.create({
   page: {
     padding: 30,
     fontFamily: 'Helvetica',
     fontSize: 9,
-    color: '#111111',
+    color: '#0C0C0D',
   },
   header: {
-    backgroundColor: '#111111',
-    color: '#ffffff',
+    backgroundColor: '#0C0C0D',
+    color: '#E6E8EA',
     textAlign: 'center',
-    paddingTop: 18,
-    paddingBottom: 18,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 18,
+    borderBottomColor: '#F5A400',
+    borderBottomWidth: 3,
+  },
+  logo: {
+    width: 210,
+    height: 58,
+    objectFit: 'contain',
+    marginHorizontal: 'auto',
+    marginBottom: 6,
   },
   brand: {
-    fontSize: 23,
+    fontSize: 22,
     fontWeight: 700,
-    marginBottom: 8,
+    marginBottom: 7,
     letterSpacing: 1.5,
+    color: '#E6E8EA',
   },
   headerLine: {
     fontSize: 10,
@@ -32,7 +43,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   cell: {
-    borderColor: '#111111',
+    borderColor: '#0C0C0D',
     borderWidth: 1,
     minHeight: 20,
     padding: 4,
@@ -44,7 +55,7 @@ const styles = StyleSheet.create({
   tableHead: {
     fontWeight: 700,
     textAlign: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#E6E8EA',
   },
   qty: {
     width: '12%',
@@ -80,20 +91,25 @@ const styles = StyleSheet.create({
 
 type Props = {
   orcamento: Orcamento
+  settings?: SystemSettings
 }
 
-export function OrcamentoPDF({ orcamento }: Props) {
+export function OrcamentoPDF({ orcamento, settings = DEFAULT_SYSTEM_SETTINGS }: Props) {
   const rows = normalizeItemsForDocument(orcamento.itens)
 
   return (
     <Document title={`Orçamento ${orcamento.numero}`}>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.brand}>{EMPRESA.nome}</Text>
-          <Text style={styles.headerLine}>Email: {EMPRESA.email}</Text>
-          <Text style={styles.headerLine}>CNPJ: {EMPRESA.cnpj}</Text>
-          <Text style={styles.headerLine}>Telefone: {EMPRESA.telefone}</Text>
-          <Text style={styles.headerLine}>{EMPRESA.regiao}</Text>
+          {settings.mostrarLogoDocumentos ? (
+            <Image src={BRAND_ASSETS.logoHorizontalWhiteAmberPng} style={styles.logo} />
+          ) : (
+            <Text style={styles.brand}>{settings.empresa.nome}</Text>
+          )}
+          <Text style={styles.headerLine}>Email: {settings.empresa.email}</Text>
+          <Text style={styles.headerLine}>CNPJ: {settings.empresa.cnpj}</Text>
+          <Text style={styles.headerLine}>Telefone: {settings.empresa.telefone}</Text>
+          <Text style={styles.headerLine}>{settings.empresa.regiao}</Text>
         </View>
 
         <View style={[styles.row, { marginTop: 12 }]}>
