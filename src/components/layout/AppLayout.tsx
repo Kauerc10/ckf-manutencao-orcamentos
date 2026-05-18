@@ -1,6 +1,6 @@
 import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, X } from 'lucide-react'
-import { type ReactNode, useCallback, useEffect, useState } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { type ReactNode, useCallback, useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { BRAND_ASSETS } from '../../lib/constants'
 import { useAuthStore } from '../../stores/authStore'
@@ -11,16 +11,10 @@ type Props = {
 
 export function AppLayout({ children }: Props) {
   const navigate = useNavigate()
-  const location = useLocation()
   const profile = useAuthStore((state) => state.profile)
   const mode = useAuthStore((state) => state.mode)
   const logout = useAuthStore((state) => state.logout)
   const [drawerOpen, setDrawerOpen] = useState(false)
-
-  // Close the mobile drawer whenever the route changes
-  useEffect(() => {
-    setDrawerOpen(false)
-  }, [location.pathname])
 
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
 
@@ -98,15 +92,15 @@ export function AppLayout({ children }: Props) {
             </div>
 
             <nav className="drawer-nav" aria-label="Menu mobile">
-              <NavLink to="/" end>
+              <NavLink to="/" end onClick={closeDrawer}>
                 <LayoutDashboard size={18} />
                 Dashboard
               </NavLink>
-              <NavLink to="/orcamentos/novo">
+              <NavLink to="/orcamentos/novo" onClick={closeDrawer}>
                 <Plus size={18} />
                 Novo orçamento
               </NavLink>
-              <NavLink to="/historico">
+              <NavLink to="/historico" onClick={closeDrawer}>
                 <FileClock size={18} />
                 Histórico
               </NavLink>
@@ -114,7 +108,7 @@ export function AppLayout({ children }: Props) {
 
             <div className="drawer-footer">
               <nav className="drawer-nav drawer-nav-secondary" aria-label="Sistema mobile">
-                <NavLink to="/configuracoes">
+                <NavLink to="/configuracoes" onClick={closeDrawer}>
                   <Settings size={18} />
                   Configurações
                 </NavLink>

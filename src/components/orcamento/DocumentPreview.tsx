@@ -37,6 +37,8 @@ export function DocumentPreview({ orcamento, compact = false, settingsOverride }
         <p>{settings.empresa.regiao}</p>
       </div>
 
+      {orcamento.status === 'excluido' ? <div className="document-deleted-banner">ORÇAMENTO EXCLUÍDO</div> : null}
+
       <div className="document-meta">
         <span>Data:</span>
         <strong>{formatDateBR(orcamento.dataOrcamento)}</strong>

@@ -7,6 +7,7 @@ import { StatusBadge } from './StatusBadge'
 type Props = {
   orcamentos: Orcamento[]
   compact?: boolean
+  canDelete?: boolean
   onDelete: (orcamento: Orcamento) => void
   onDuplicate: (orcamento: Orcamento) => void
   onDownloadPdf: (orcamento: Orcamento) => void
@@ -16,6 +17,7 @@ type Props = {
 export function OrcamentoTable({
   orcamentos,
   compact = false,
+  canDelete = false,
   onDelete,
   onDuplicate,
   onDownloadPdf,
@@ -45,11 +47,20 @@ export function OrcamentoTable({
           </tr>
         </thead>
         <tbody>
-          {orcamentos.map((orcamento) => (
-            <tr key={orcamento.id}>
+          {orcamentos.map((orcamento) => {
+            const isDeleted = orcamento.status === 'excluido'
+            return (
+            <tr key={orcamento.id} className={isDeleted ? 'row-deleted' : undefined}>
               <td>{formatOrcamentoNumero(orcamento.numero)}</td>
               <td>{formatDateBR(orcamento.dataOrcamento)}</td>
-              <td className="strong-cell">{orcamento.servicoCliente}</td>
+              <td className="strong-cell">
+                <span>{orcamento.servicoCliente}</span>
+                {isDeleted ? (
+                  <small className="deleted-audit-line">
+                    Excluído por {orcamento.excluidoPorNome ?? 'admin'}: {orcamento.excluidoMotivo}
+                  </small>
+                ) : null}
+              </td>
               <td>{formatCurrency(orcamento.total)}</td>
               <td>
                 <StatusBadge status={orcamento.status} />
@@ -60,25 +71,31 @@ export function OrcamentoTable({
                   <Link title="Ver" to={`/orcamentos/${orcamento.id}`}>
                     <Eye size={16} />
                   </Link>
-                  <Link title="Editar" to={`/orcamentos/${orcamento.id}/editar`}>
-                    <Edit3 size={16} />
-                  </Link>
-                  <button title="Duplicar" type="button" onClick={() => onDuplicate(orcamento)}>
-                    <Copy size={16} />
-                  </button>
+                  {!isDeleted ? (
+                    <Link title="Editar" to={`/orcamentos/${orcamento.id}/editar`}>
+                      <Edit3 size={16} />
+                    </Link>
+                  ) : null}
+                  {!isDeleted ? (
+                    <button title="Duplicar" type="button" onClick={() => onDuplicate(orcamento)}>
+                      <Copy size={16} />
+                    </button>
+                  ) : null}
                   <button title="Baixar PDF" type="button" onClick={() => onDownloadPdf(orcamento)}>
                     <Download size={16} />
                   </button>
                   <button title="Baixar XLSX" type="button" onClick={() => onDownloadXlsx(orcamento)}>
                     <FileSpreadsheet size={16} />
                   </button>
-                  <button className="danger-icon" title="Excluir" type="button" onClick={() => onDelete(orcamento)}>
-                    <Trash2 size={16} />
-                  </button>
+                  {canDelete && !isDeleted ? (
+                    <button className="danger-icon" title="Excluir" type="button" onClick={() => onDelete(orcamento)}>
+                      <Trash2 size={16} />
+                    </button>
+                  ) : null}
                 </div>
               </td>
             </tr>
-          ))}
+          )})}
         </tbody>
       </table>
     </div>

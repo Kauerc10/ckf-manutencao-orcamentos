@@ -5,6 +5,7 @@ import { OrcamentoTable } from './OrcamentoTable'
 type Props = {
   orcamentos: Orcamento[]
   compact?: boolean
+  canDelete?: boolean
   onDelete: (orcamento: Orcamento) => void
   onDuplicate: (orcamento: Orcamento) => void
   onDownloadPdf: (orcamento: Orcamento) => void
@@ -20,6 +21,7 @@ type Props = {
 export function OrcamentoList({
   orcamentos,
   compact = false,
+  canDelete = false,
   onDelete,
   onDuplicate,
   onDownloadPdf,
@@ -41,6 +43,7 @@ export function OrcamentoList({
         <OrcamentoTable
           orcamentos={orcamentos}
           compact={compact}
+          canDelete={canDelete}
           onDelete={onDelete}
           onDuplicate={onDuplicate}
           onDownloadPdf={onDownloadPdf}
@@ -54,6 +57,7 @@ export function OrcamentoList({
           <OrcamentoCard
             key={orcamento.id}
             orcamento={orcamento}
+            canDelete={canDelete}
             onDelete={onDelete}
             onDuplicate={onDuplicate}
             onDownloadPdf={onDownloadPdf}
