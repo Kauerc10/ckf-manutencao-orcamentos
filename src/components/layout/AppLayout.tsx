@@ -1,4 +1,4 @@
-import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, X } from 'lucide-react'
+import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, Users, X } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -46,6 +46,10 @@ export function AppLayout({ children }: Props) {
           <NavLink to="/orcamentos/novo">
             <Plus size={18} />
             Novo orçamento
+          </NavLink>
+          <NavLink to="/clientes">
+            <Users size={18} />
+            Clientes
           </NavLink>
           <NavLink to="/historico">
             <FileClock size={18} />
@@ -106,6 +110,10 @@ export function AppLayout({ children }: Props) {
                 <Plus size={18} />
                 Novo orçamento
               </NavLink>
+              <NavLink to="/clientes">
+                <Users size={18} />
+                Clientes
+              </NavLink>
               <NavLink to="/historico">
                 <FileClock size={18} />
                 Histórico
@@ -158,6 +166,10 @@ export function AppLayout({ children }: Props) {
         <NavLink to="/orcamentos/novo" className="bottom-nav-item">
           <Plus size={20} />
           <span>Novo</span>
+        </NavLink>
+        <NavLink to="/clientes" className="bottom-nav-item">
+          <Users size={20} />
+          <span>Clientes</span>
         </NavLink>
         <NavLink to="/historico" className="bottom-nav-item">
           <FileClock size={20} />

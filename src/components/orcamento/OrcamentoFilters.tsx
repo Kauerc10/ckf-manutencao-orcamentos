@@ -1,14 +1,15 @@
-import type { OrcamentoFilters, OrcamentoStatus } from '../../types'
+import type { Cliente, OrcamentoFilters, OrcamentoStatus } from '../../types'
 
 type Props = {
   filters: OrcamentoFilters
   onChange: (filters: OrcamentoFilters) => void
   creators: Array<{ id: string; nome: string }>
+  clientes?: Cliente[]
 }
 
 const statuses: Array<OrcamentoStatus | 'todos'> = ['todos', 'rascunho', 'enviado', 'aprovado', 'recusado', 'cancelado']
 
-export function OrcamentoFilters({ filters, onChange, creators }: Props) {
+export function OrcamentoFilters({ filters, onChange, creators, clientes = [] }: Props) {
   return (
     <div className="filters-bar">
       <label>
@@ -47,6 +48,20 @@ export function OrcamentoFilters({ filters, onChange, creators }: Props) {
           value={filters.dataFinal}
           onChange={(event) => onChange({ ...filters, dataFinal: event.target.value })}
         />
+      </label>
+      <label>
+        Cliente
+        <select
+          value={filters.clienteId}
+          onChange={(event) => onChange({ ...filters, clienteId: event.target.value })}
+        >
+          <option value="">Todos</option>
+          {clientes.map((cliente) => (
+            <option key={cliente.id} value={cliente.id}>
+              {cliente.nome}
+            </option>
+          ))}
+        </select>
       </label>
       <label>
         Criado por

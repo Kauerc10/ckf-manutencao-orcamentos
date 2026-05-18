@@ -7,11 +7,13 @@ import { exportOrcamentosCsv } from '../lib/csv'
 import { downloadBlob, downloadText } from '../lib/downloads'
 import { DEFAULT_FILTERS, useOrcamentos } from '../hooks/useOrcamentos'
 import { useOrcamentoActions } from '../hooks/useOrcamentoActions'
+import { useClientes } from '../hooks/useClientes'
 
 export function Historico() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [page, setPage] = useState(1)
   const { filtered, creators, loading, error, reload } = useOrcamentos(filters)
+  const { clientes } = useClientes()
   const actions = useOrcamentoActions(reload)
   const pageSize = 10
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
@@ -54,7 +56,7 @@ export function Historico() {
             </button>
           </div>
         </div>
-        <OrcamentoFilters filters={filters} onChange={handleFiltersChange} creators={creators} />
+        <OrcamentoFilters filters={filters} onChange={handleFiltersChange} creators={creators} clientes={clientes} />
         {loading ? <div className="skeleton-block">Carregando histórico...</div> : null}
         {error ? <div className="error-state">{error}</div> : null}
         {!loading ? (

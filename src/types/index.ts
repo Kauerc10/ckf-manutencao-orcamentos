@@ -2,6 +2,10 @@ export const ORCAMENTO_STATUSES = ['rascunho', 'enviado', 'aprovado', 'recusado'
 
 export type OrcamentoStatus = (typeof ORCAMENTO_STATUSES)[number]
 
+export const CLIENTE_TIPOS = ['cpf', 'cnpj'] as const
+
+export type ClienteTipo = (typeof CLIENTE_TIPOS)[number]
+
 export type OrcamentoItem = {
   id?: string
   quantidade: number | null
@@ -15,6 +19,11 @@ export type Orcamento = {
   numero: number
   dataOrcamento: string
   servicoCliente: string
+  clienteId?: string | null
+  clienteNome?: string | null
+  clienteDocumento?: string | null
+  representanteId?: string | null
+  representanteNome?: string | null
   status: OrcamentoStatus
   observacoes: string
   validadeDias: number
@@ -37,6 +46,70 @@ export type OrcamentoFilters = {
   dataInicial: string
   dataFinal: string
   criadoPor: string
+  clienteId: string
+}
+
+export type ClienteRepresentante = {
+  id?: string
+  clienteId?: string
+  nome: string
+  cargo: string
+  telefone: string
+  email: string
+  observacao: string
+  principal: boolean
+  ativo: boolean
+  criadoEm?: string
+  atualizadoEm?: string
+}
+
+export type Cliente = {
+  id: string
+  tipo: ClienteTipo
+  nome: string
+  documento: string
+  nomeFantasia: string
+  email: string
+  telefonePrincipal: string
+  telefoneAlternativo: string
+  inscricaoEstadual: string
+  cep: string
+  logradouro: string
+  numero: string
+  complemento: string
+  bairro: string
+  cidade: string
+  uf: string
+  referenciaAcesso: string
+  observacoes: string
+  tags: string[]
+  ativo: boolean
+  criadoPor: string
+  criadoPorNome: string
+  atualizadoPor: string | null
+  criadoEm: string
+  atualizadoEm: string
+  representantes: ClienteRepresentante[]
+}
+
+export type ClienteDraft = Omit<Cliente, 'id' | 'criadoPor' | 'criadoPorNome' | 'atualizadoPor' | 'criadoEm' | 'atualizadoEm'>
+
+export type ClienteFilters = {
+  search: string
+  tipo: ClienteTipo | 'todos'
+  status: 'ativos' | 'arquivados' | 'todos'
+  cidadeUf: string
+}
+
+export type ActivityLog = {
+  id: string
+  entityType: 'cliente' | 'cliente_representante' | 'orcamento'
+  entityId: string
+  action: string
+  actorId: string | null
+  actorName: string | null
+  details: Record<string, unknown>
+  criadoEm: string
 }
 
 export type ProfileRole = 'admin' | 'usuario'

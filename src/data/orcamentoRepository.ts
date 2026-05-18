@@ -15,6 +15,8 @@ type SupabaseOrcamentoRow = {
   numero: number
   data_orcamento: string
   servico_cliente: string
+  cliente_id: string | null
+  representante_id: string | null
   status: Orcamento['status']
   observacoes: string
   validade_dias: number
@@ -23,6 +25,8 @@ type SupabaseOrcamentoRow = {
   criado_em: string
   atualizado_em: string
   profiles?: { nome: string; email: string } | null
+  clientes?: { nome: string; documento: string } | null
+  cliente_representantes?: { nome: string } | null
   orcamento_itens?: Array<{
     id: string
     quantidade: number | null
@@ -62,6 +66,11 @@ function mapSupabaseOrcamento(row: SupabaseOrcamentoRow): Orcamento {
     numero: row.numero,
     dataOrcamento: row.data_orcamento,
     servicoCliente: row.servico_cliente,
+    clienteId: row.cliente_id,
+    clienteNome: row.clientes?.nome ?? null,
+    clienteDocumento: row.clientes?.documento ?? null,
+    representanteId: row.representante_id,
+    representanteNome: row.cliente_representantes?.nome ?? null,
     status: row.status,
     observacoes: row.observacoes ?? '',
     validadeDias: row.validade_dias ?? DEFAULT_VALIDADE_DIAS,
@@ -88,13 +97,17 @@ export function applyOrcamentoFilters(orcamentos: Orcamento[], filters: Orcament
     const matchesSearch =
       !search ||
       String(orcamento.numero).includes(search) ||
-      orcamento.servicoCliente.toLowerCase().includes(search)
+      orcamento.servicoCliente.toLowerCase().includes(search) ||
+      (orcamento.clienteNome?.toLowerCase().includes(search) ?? false) ||
+      (orcamento.clienteDocumento?.toLowerCase().includes(search) ?? false) ||
+      (orcamento.representanteNome?.toLowerCase().includes(search) ?? false)
     const matchesStatus = filters.status === 'todos' || orcamento.status === filters.status
     const matchesStart = !filters.dataInicial || orcamento.dataOrcamento >= filters.dataInicial
     const matchesEnd = !filters.dataFinal || orcamento.dataOrcamento <= filters.dataFinal
     const matchesCreator = !filters.criadoPor || orcamento.criadoPor === filters.criadoPor
+    const matchesCliente = !filters.clienteId || orcamento.clienteId === filters.clienteId
 
-    return matchesSearch && matchesStatus && matchesStart && matchesEnd && matchesCreator
+    return matchesSearch && matchesStatus && matchesStart && matchesEnd && matchesCreator && matchesCliente
   })
 }
 
@@ -102,7 +115,7 @@ export async function listOrcamentos(): Promise<Orcamento[]> {
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase
       .from('orcamentos')
-      .select('*, profiles:criado_por(nome,email), orcamento_itens(*)')
+      .select('*, profiles:criado_por(nome,email), clientes:cliente_id(nome,documento), cliente_representantes:representante_id(nome), orcamento_itens(*)')
       .order('numero', { ascending: false })
 
     if (error) throw error
@@ -135,6 +148,8 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
         .update({
           data_orcamento: input.dataOrcamento,
           servico_cliente: input.servicoCliente,
+          cliente_id: input.clienteId || null,
+          representante_id: input.representanteId || null,
           status: input.status,
           observacoes: input.observacoes,
           validade_dias: input.validadeDias,
@@ -169,6 +184,8 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
       .insert({
         data_orcamento: input.dataOrcamento,
         servico_cliente: input.servicoCliente,
+        cliente_id: input.clienteId || null,
+        representante_id: input.representanteId || null,
         status: input.status,
         observacoes: input.observacoes,
         validade_dias: input.validadeDias,
@@ -208,6 +225,11 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
       ...existing,
       dataOrcamento: input.dataOrcamento,
       servicoCliente: input.servicoCliente,
+      clienteId: input.clienteId ?? null,
+      clienteNome: input.clienteNome ?? existing.clienteNome ?? null,
+      clienteDocumento: input.clienteDocumento ?? existing.clienteDocumento ?? null,
+      representanteId: input.representanteId ?? null,
+      representanteNome: input.representanteNome ?? null,
       status: input.status,
       observacoes: input.observacoes,
       validadeDias: input.validadeDias,
@@ -224,6 +246,11 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
     numero: nextLocalNumero(all),
     dataOrcamento: input.dataOrcamento,
     servicoCliente: input.servicoCliente,
+    clienteId: input.clienteId ?? null,
+    clienteNome: input.clienteNome ?? null,
+    clienteDocumento: input.clienteDocumento ?? null,
+    representanteId: input.representanteId ?? null,
+    representanteNome: input.representanteNome ?? null,
     status: input.status,
     observacoes: input.observacoes,
     validadeDias: input.validadeDias,

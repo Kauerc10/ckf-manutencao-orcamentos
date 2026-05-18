@@ -49,7 +49,12 @@ export function OrcamentoTable({
             <tr key={orcamento.id}>
               <td>{formatOrcamentoNumero(orcamento.numero)}</td>
               <td>{formatDateBR(orcamento.dataOrcamento)}</td>
-              <td className="strong-cell">{orcamento.servicoCliente}</td>
+              <td className="strong-cell">
+                <span className="cell-stack">
+                  <span>{orcamento.servicoCliente}</span>
+                  {orcamento.clienteNome ? <small>{orcamento.clienteNome}</small> : null}
+                </span>
+              </td>
               <td>{formatCurrency(orcamento.total)}</td>
               <td>
                 <StatusBadge status={orcamento.status} />

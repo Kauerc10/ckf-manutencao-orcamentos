@@ -42,6 +42,11 @@ describe('orcamento business rules', () => {
       numero: 285,
       dataOrcamento: '2026-05-16',
       servicoCliente: 'Filial Sao Jose',
+      clienteId: 'cliente-1',
+      clienteNome: 'Filial Sao Jose',
+      clienteDocumento: '57.461.028/0001-43',
+      representanteId: 'rep-1',
+      representanteNome: 'Ana Gestora',
       status: 'aprovado',
       observacoes: 'Manter observacao',
       validadeDias: 10,
@@ -56,6 +61,8 @@ describe('orcamento business rules', () => {
     expect(duplicate).toMatchObject({
       status: 'rascunho',
       servicoCliente: 'Filial Sao Jose',
+      clienteId: 'cliente-1',
+      representanteId: 'rep-1',
       observacoes: 'Manter observacao',
       validadeDias: 10,
     })

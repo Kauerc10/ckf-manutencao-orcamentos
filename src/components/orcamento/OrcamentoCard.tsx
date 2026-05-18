@@ -32,6 +32,7 @@ export function OrcamentoCard({ orcamento, onDelete, onDuplicate, onDownloadPdf,
       <div className="card-body">
         <div className="card-info">
           <strong className="card-client">{orcamento.servicoCliente}</strong>
+          {orcamento.clienteNome ? <span>{orcamento.clienteNome}</span> : null}
           <span className="card-total">{formatCurrency(orcamento.total)}</span>
         </div>
       </div>

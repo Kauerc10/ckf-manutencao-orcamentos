@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { DocumentPreview } from '../components/orcamento/DocumentPreview'
 import { StatusBadge } from '../components/orcamento/StatusBadge'
 import { getOrcamento, saveOrcamento } from '../data/orcamentoRepository'
+import { formatClienteDocumento } from '../lib/clientes'
 import { formatCurrency, formatDateBR, formatDateTimeBR } from '../lib/formatters'
 import { createDuplicateDraft } from '../lib/orcamento'
 import { useOrcamentoActions } from '../hooks/useOrcamentoActions'
@@ -49,6 +50,23 @@ export function VisualizarOrcamento() {
         </div>
 
         <dl className="meta-grid">
+          {orcamento.clienteId ? (
+            <div>
+              <dt>Cliente cadastrado</dt>
+              <dd>
+                <Link className="inline-link" to={`/clientes/${orcamento.clienteId}`}>
+                  {orcamento.clienteNome ?? 'Ver ficha'}
+                </Link>
+                {orcamento.clienteDocumento ? ` · ${formatClienteDocumento(orcamento.clienteDocumento)}` : ''}
+              </dd>
+            </div>
+          ) : null}
+          {orcamento.representanteNome ? (
+            <div>
+              <dt>Representante</dt>
+              <dd>{orcamento.representanteNome}</dd>
+            </div>
+          ) : null}
           <div>
             <dt>Data</dt>
             <dd>{formatDateBR(orcamento.dataOrcamento)}</dd>

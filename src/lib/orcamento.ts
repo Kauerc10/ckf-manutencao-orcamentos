@@ -70,6 +70,11 @@ export function createDuplicateDraft(orcamento: Orcamento): OrcamentoDraft {
   return {
     dataOrcamento: orcamento.dataOrcamento,
     servicoCliente: orcamento.servicoCliente,
+    clienteId: orcamento.clienteId ?? null,
+    clienteNome: orcamento.clienteNome ?? null,
+    clienteDocumento: orcamento.clienteDocumento ?? null,
+    representanteId: orcamento.representanteId ?? null,
+    representanteNome: orcamento.representanteNome ?? null,
     status: 'rascunho',
     observacoes: orcamento.observacoes,
     validadeDias: orcamento.validadeDias,

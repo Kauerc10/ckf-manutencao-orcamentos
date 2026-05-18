@@ -1,6 +1,6 @@
 import { Eye, Plus, Save, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { saveOrcamento } from '../../data/orcamentoRepository'
 import { DEFAULT_ITEM_ROWS, DEFAULT_VALIDADE_DIAS, MAX_ITEM_ROWS } from '../../lib/constants'
@@ -9,6 +9,7 @@ import { calculateGeneralTotal, calculateItemTotal, createInitialItems } from '.
 import { orcamentoFormSchema } from '../../lib/validations'
 import { useAuthStore } from '../../stores/authStore'
 import { useSystemSettingsStore } from '../../stores/systemSettingsStore'
+import { useClientes } from '../../hooks/useClientes'
 import type { Orcamento, OrcamentoDraft, OrcamentoItem, OrcamentoStatus } from '../../types'
 import { DocumentPreview } from './DocumentPreview'
 
@@ -33,6 +34,11 @@ function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VA
     return {
       dataOrcamento: existing.dataOrcamento,
       servicoCliente: existing.servicoCliente,
+      clienteId: existing.clienteId ?? null,
+      clienteNome: existing.clienteNome ?? null,
+      clienteDocumento: existing.clienteDocumento ?? null,
+      representanteId: existing.representanteId ?? null,
+      representanteNome: existing.representanteNome ?? null,
       status: existing.status,
       observacoes: existing.observacoes,
       validadeDias: existing.validadeDias,
@@ -44,6 +50,11 @@ function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VA
   return {
     dataOrcamento: todayIso(),
     servicoCliente: '',
+    clienteId: null,
+    clienteNome: null,
+    clienteDocumento: null,
+    representanteId: null,
+    representanteNome: null,
     status: 'rascunho',
     observacoes: observacoesPadrao,
     validadeDias: validadePadraoDias,
@@ -54,9 +65,11 @@ function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VA
 
 export function OrcamentoEditor({ existing }: Props) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const profile = useAuthStore((state) => state.profile)
   const settings = useSystemSettingsStore((state) => state.settings)
   const settingsLoaded = useSystemSettingsStore((state) => state.loaded)
+  const { clientes } = useClientes()
   const [draft, setDraft] = useState<OrcamentoDraft>(() =>
     draftFromExisting(existing, settings.validadePadraoDias, settings.observacoesPadrao),
   )
@@ -79,6 +92,11 @@ export function OrcamentoEditor({ existing }: Props) {
     numero: existing?.numero ?? 0,
     dataOrcamento: draft.dataOrcamento,
     servicoCliente: draft.servicoCliente,
+    clienteId: draft.clienteId,
+    clienteNome: draft.clienteNome,
+    clienteDocumento: draft.clienteDocumento,
+    representanteId: draft.representanteId,
+    representanteNome: draft.representanteNome,
     status: draft.status,
     observacoes: draft.observacoes,
     validadeDias: draft.validadeDias,
@@ -88,6 +106,59 @@ export function OrcamentoEditor({ existing }: Props) {
     criadoEm: existing?.criadoEm ?? new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
     itens: draft.itens.map((item) => ({ ...item, valorTotal: calculateItemTotal(item) })),
+  }
+
+  useEffect(() => {
+    const clienteId = searchParams.get('clienteId')
+    if (!clienteId || existing || !clientes.length || draft.clienteId) return
+    const cliente = clientes.find((item) => item.id === clienteId)
+    if (!cliente) return
+    const principal = cliente.representantes.find((representante) => representante.principal && representante.ativo)
+    setDraft((current) => ({
+      ...current,
+      clienteId: cliente.id,
+      clienteNome: cliente.nome,
+      clienteDocumento: cliente.documento,
+      representanteId: principal?.id ?? null,
+      representanteNome: principal?.nome ?? null,
+      servicoCliente: current.servicoCliente.trim() ? current.servicoCliente : cliente.nome,
+    }))
+  }, [clientes, draft.clienteId, existing, searchParams])
+
+  function selectCliente(clienteId: string) {
+    const cliente = clientes.find((item) => item.id === clienteId)
+    if (!cliente) {
+      setDraft((current) => ({
+        ...current,
+        clienteId: null,
+        clienteNome: null,
+        clienteDocumento: null,
+        representanteId: null,
+        representanteNome: null,
+      }))
+      return
+    }
+
+    const principal = cliente.representantes.find((representante) => representante.principal && representante.ativo)
+    setDraft((current) => ({
+      ...current,
+      clienteId: cliente.id,
+      clienteNome: cliente.nome,
+      clienteDocumento: cliente.documento,
+      representanteId: principal?.id ?? null,
+      representanteNome: principal?.nome ?? null,
+      servicoCliente: current.servicoCliente.trim() ? current.servicoCliente : cliente.nome,
+    }))
+  }
+
+  function selectRepresentante(representanteId: string) {
+    const cliente = clientes.find((item) => item.id === draft.clienteId)
+    const representante = cliente?.representantes.find((item) => item.id === representanteId)
+    setDraft((current) => ({
+      ...current,
+      representanteId: representante?.id ?? null,
+      representanteNome: representante?.nome ?? null,
+    }))
   }
 
   function updateItem(index: number, patch: Partial<OrcamentoItem>) {
@@ -158,6 +229,44 @@ export function OrcamentoEditor({ existing }: Props) {
           ) : null}
 
           <div className="form-grid">
+            <label>
+              Cliente cadastrado
+              <select value={draft.clienteId ?? ''} onChange={(event) => selectCliente(event.target.value)}>
+                <option value="">Sem vínculo</option>
+                {clientes
+                  .filter((cliente) => cliente.ativo)
+                  .map((cliente) => (
+                    <option key={cliente.id} value={cliente.id}>
+                      {cliente.nome}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label>
+              Representante
+              <select
+                value={draft.representanteId ?? ''}
+                onChange={(event) => selectRepresentante(event.target.value)}
+                disabled={!draft.clienteId}
+              >
+                <option value="">Não informado</option>
+                {clientes
+                  .find((cliente) => cliente.id === draft.clienteId)
+                  ?.representantes.filter((representante) => representante.ativo)
+                  .map((representante) => (
+                    <option key={representante.id} value={representante.id}>
+                      {representante.nome} · {representante.cargo}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="span-2 quick-client-link">
+              Cliente ainda não cadastrado
+              <Link className="secondary-button" to="/clientes/novo" target="_blank">
+                <Plus size={16} />
+                Cadastrar em nova aba
+              </Link>
+            </label>
             <label>
               Data
               <input

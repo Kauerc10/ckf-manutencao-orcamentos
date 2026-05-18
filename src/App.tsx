@@ -4,6 +4,9 @@ import { Toaster } from 'sonner'
 import { AppLayout } from './components/layout/AppLayout'
 import { useAuthStore } from './stores/authStore'
 import { useSystemSettingsStore } from './stores/systemSettingsStore'
+import { ClienteDetalhe } from './pages/ClienteDetalhe'
+import { ClienteFormPage } from './pages/ClienteFormPage'
+import { Clientes } from './pages/Clientes'
 import { Configuracoes } from './pages/Configuracoes'
 import { Dashboard } from './pages/Dashboard'
 import { EditarOrcamento } from './pages/EditarOrcamento'
@@ -33,6 +36,10 @@ function ProtectedApp() {
     <AppLayout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/clientes" element={<Clientes />} />
+        <Route path="/clientes/novo" element={<ClienteFormPage />} />
+        <Route path="/clientes/:id" element={<ClienteDetalhe />} />
+        <Route path="/clientes/:id/editar" element={<ClienteFormPage />} />
         <Route path="/historico" element={<Historico />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/orcamentos/novo" element={<NovoOrcamento />} />

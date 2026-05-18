@@ -36,4 +36,16 @@ describe('supabase migration contract', () => {
     expect(migrationSql).toContain('revoke update on table public.profiles from authenticated')
     expect(migrationSql).toContain('grant update (nome) on table public.profiles to authenticated')
   })
+
+  it('adds client registry tables with RLS, audit logs and optional quotation links', () => {
+    expect(migrationSql).toContain('create table if not exists public.clientes')
+    expect(migrationSql).toContain('create table if not exists public.cliente_representantes')
+    expect(migrationSql).toContain('create table if not exists public.activity_logs')
+    expect(migrationSql).toContain('add column if not exists cliente_id uuid references public.clientes(id)')
+    expect(migrationSql).toContain('add column if not exists representante_id uuid references public.cliente_representantes(id)')
+    expect(migrationSql).toContain('alter table public.clientes enable row level security')
+    expect(migrationSql).toContain('grant select, insert, update on table public.clientes to authenticated')
+    expect(migrationSql).toContain('private.log_activity')
+    expect(migrationSql).toContain("entity_type = 'cliente'")
+  })
 })
