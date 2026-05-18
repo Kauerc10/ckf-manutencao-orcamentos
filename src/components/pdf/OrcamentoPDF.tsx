@@ -1,6 +1,6 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import { BRAND_ASSETS, DEFAULT_SYSTEM_SETTINGS } from '../../lib/constants'
-import { formatCurrency, formatDateBR } from '../../lib/formatters'
+import { formatCurrency, formatDateBR, formatOrcamentoNumero } from '../../lib/formatters'
 import { normalizeItemsForDocument } from '../../lib/orcamento'
 import type { Orcamento, SystemSettings } from '../../types'
 
@@ -98,7 +98,7 @@ export function OrcamentoPDF({ orcamento, settings = DEFAULT_SYSTEM_SETTINGS }: 
   const rows = normalizeItemsForDocument(orcamento.itens)
 
   return (
-    <Document title={`Orçamento ${orcamento.numero}`}>
+    <Document title={`Orçamento ${formatOrcamentoNumero(orcamento.numero)}`}>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           {settings.mostrarLogoDocumentos ? (
@@ -123,7 +123,7 @@ export function OrcamentoPDF({ orcamento, settings = DEFAULT_SYSTEM_SETTINGS }: 
             <Text style={styles.label}>Orçamento n°</Text>
           </View>
           <View style={[styles.cell, { width: '17%' }]}>
-            <Text>{orcamento.numero}</Text>
+            <Text>{formatOrcamentoNumero(orcamento.numero)}</Text>
           </View>
         </View>
 

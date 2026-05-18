@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp, Copy, Download, Edit3, Eye, FileSpreadsheet, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { formatCurrency, formatDateBR } from '../../lib/formatters'
+import { formatCurrency, formatDateBR, formatOrcamentoNumero } from '../../lib/formatters'
 import type { Orcamento } from '../../types'
 import { StatusBadge } from './StatusBadge'
 
@@ -20,7 +20,7 @@ export function OrcamentoCard({ orcamento, onDelete, onDuplicate, onDownloadPdf,
     <article className="orcamento-card">
       <button className="card-header" type="button" onClick={() => setExpanded(!expanded)} aria-expanded={expanded}>
         <div className="card-header-left">
-          <span className="card-number">#{orcamento.numero}</span>
+          <span className="card-number">#{formatOrcamentoNumero(orcamento.numero)}</span>
           <span className="card-date">{formatDateBR(orcamento.dataOrcamento)}</span>
         </div>
         <div className="card-header-right">

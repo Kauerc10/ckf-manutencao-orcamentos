@@ -1,6 +1,6 @@
 import { Copy, Download, Edit3, Eye, FileSpreadsheet, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { formatCurrency, formatDateBR } from '../../lib/formatters'
+import { formatCurrency, formatDateBR, formatOrcamentoNumero } from '../../lib/formatters'
 import type { Orcamento } from '../../types'
 import { StatusBadge } from './StatusBadge'
 
@@ -47,7 +47,7 @@ export function OrcamentoTable({
         <tbody>
           {orcamentos.map((orcamento) => (
             <tr key={orcamento.id}>
-              <td>{orcamento.numero}</td>
+              <td>{formatOrcamentoNumero(orcamento.numero)}</td>
               <td>{formatDateBR(orcamento.dataOrcamento)}</td>
               <td className="strong-cell">{orcamento.servicoCliente}</td>
               <td>{formatCurrency(orcamento.total)}</td>
