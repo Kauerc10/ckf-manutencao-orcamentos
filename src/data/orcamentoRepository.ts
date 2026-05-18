@@ -115,7 +115,7 @@ export async function listOrcamentos(): Promise<Orcamento[]> {
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase
       .from('orcamentos')
-      .select('*, profiles:criado_por(nome,email), excluido_por_profile:excluido_por(nome,email), orcamento_itens(*)')
+      .select('*, profiles:profiles!orcamentos_criado_por_fkey(nome,email), excluido_por_profile:profiles!orcamentos_excluido_por_fkey(nome,email), orcamento_itens(*)')
       .order('numero', { ascending: false })
 
     if (error) throw error
