@@ -62,7 +62,7 @@ function writeLocal(orcamentos: Orcamento[]): void {
 }
 
 function nextLocalNumero(orcamentos: Orcamento[]): number {
-  return Math.max(0, ...orcamentos.map((orcamento) => orcamento.numero)) + 1
+  return Math.max(284, ...orcamentos.map((orcamento) => orcamento.numero)) + 1
 }
 
 function mapSupabaseOrcamento(row: SupabaseOrcamentoRow): Orcamento {
