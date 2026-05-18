@@ -41,6 +41,7 @@ supabase/.env
 # OS files
 .DS_Store
 Thumbs.db
+CKF_MANUTENCAO_BRANDKIT_COMPLETO_AUDITADO_2026/
 
 # TypeScript / Vite / cache
 *.tsbuildinfo
