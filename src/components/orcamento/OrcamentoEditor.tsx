@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { saveOrcamento } from '../../data/orcamentoRepository'
 import { DEFAULT_ITEM_ROWS, DEFAULT_VALIDADE_DIAS, MAX_ITEM_ROWS } from '../../lib/constants'
-import { parseLocalizedNumber } from '../../lib/formatters'
+import { parseLocalizedNumber, formatOrcamentoNumero } from '../../lib/formatters'
 import { calculateGeneralTotal, calculateItemTotal, createInitialItems } from '../../lib/orcamento'
 import { orcamentoFormSchema } from '../../lib/validations'
 import { useAuthStore } from '../../stores/authStore'
@@ -130,7 +130,7 @@ export function OrcamentoEditor({ existing }: Props) {
     setSaving(true)
     try {
       const saved = await saveOrcamento({ ...result.data, total, id: existing?.id }, profile)
-      toast.success(`Orçamento ${saved.numero} salvo.`)
+      toast.success(`Orçamento ${formatOrcamentoNumero(saved.numero)} salvo.`)
       navigate(viewAfterSave ? `/orcamentos/${saved.id}` : `/orcamentos/${saved.id}/editar`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar orçamento.')
@@ -145,10 +145,10 @@ export function OrcamentoEditor({ existing }: Props) {
         <form className="panel editor-form" onSubmit={(event) => event.preventDefault()}>
           <div className="panel-heading">
             <div>
-              <h2>{existing ? `Editar orçamento ${existing.numero}` : 'Novo orçamento'}</h2>
+              <h2>{existing ? `Editar orçamento ${formatOrcamentoNumero(existing.numero)}` : 'Novo orçamento'}</h2>
               <p>{existing ? 'O número permanece fixo.' : 'O número oficial será gerado ao salvar.'}</p>
             </div>
-            <strong className="number-pill">{existing?.numero ?? 'Gerado ao salvar'}</strong>
+            <strong className="number-pill">{existing ? formatOrcamentoNumero(existing.numero) : 'Gerado ao salvar'}</strong>
           </div>
 
           {existing && ['aprovado', 'recusado', 'cancelado'].includes(existing.status) ? (

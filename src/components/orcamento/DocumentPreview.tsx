@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { BRAND_ASSETS, DOCUMENT_ITEM_ROW_COUNT } from '../../lib/constants'
-import { formatCurrency, formatDateBR } from '../../lib/formatters'
+import { formatCurrency, formatDateBR, formatOrcamentoNumero } from '../../lib/formatters'
 import { normalizeItemsForDocument } from '../../lib/orcamento'
 import { useSystemSettingsStore } from '../../stores/systemSettingsStore'
 import type { Orcamento, SystemSettings } from '../../types'
@@ -41,7 +41,7 @@ export function DocumentPreview({ orcamento, compact = false, settingsOverride }
         <span>Data:</span>
         <strong>{formatDateBR(orcamento.dataOrcamento)}</strong>
         <span>Orçamento n°</span>
-        <strong>{orcamento.numero || 'Gerado ao salvar'}</strong>
+        <strong>{orcamento.numero ? formatOrcamentoNumero(orcamento.numero) : 'Gerado ao salvar'}</strong>
       </div>
 
       <div className="document-service">
