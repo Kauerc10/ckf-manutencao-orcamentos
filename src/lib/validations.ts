@@ -44,3 +44,19 @@ export const orcamentoFormSchema = z
   })
 
 export type OrcamentoFormValues = z.infer<typeof orcamentoFormSchema>
+
+export const systemSettingsSchema = z.object({
+  empresa: z.object({
+    nome: z.string().trim().min(2, 'Informe o nome da empresa.'),
+    email: z.string().email('Informe um email válido.'),
+    cnpj: z.string().trim().min(14, 'Informe o CNPJ.'),
+    telefone: z.string().trim().min(8, 'Informe o telefone.'),
+    regiao: z.string().trim().min(2, 'Informe a região.'),
+  }),
+  validadePadraoDias: z.number().int().positive('A validade deve ser maior que zero.').max(365),
+  observacoesPadrao: z.string().max(800, 'Use até 800 caracteres nas observações padrão.'),
+  previewDensidade: z.enum(['compacta', 'confortavel']),
+  mostrarLogoDocumentos: z.boolean(),
+})
+
+export type SystemSettingsFormValues = z.infer<typeof systemSettingsSchema>

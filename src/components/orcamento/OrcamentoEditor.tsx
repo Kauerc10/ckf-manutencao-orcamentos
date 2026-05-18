@@ -1,5 +1,5 @@
 import { Eye, Plus, Save, Trash2, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { saveOrcamento } from '../../data/orcamentoRepository'
@@ -8,6 +8,7 @@ import { parseLocalizedNumber } from '../../lib/formatters'
 import { calculateGeneralTotal, calculateItemTotal, createInitialItems } from '../../lib/orcamento'
 import { orcamentoFormSchema } from '../../lib/validations'
 import { useAuthStore } from '../../stores/authStore'
+import { useSystemSettingsStore } from '../../stores/systemSettingsStore'
 import type { Orcamento, OrcamentoDraft, OrcamentoItem, OrcamentoStatus } from '../../types'
 import { DocumentPreview } from './DocumentPreview'
 
@@ -27,7 +28,7 @@ function fromInputNumber(value: string): number | null {
   return parseLocalizedNumber(value)
 }
 
-function draftFromExisting(existing?: Orcamento): OrcamentoDraft {
+function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VALIDADE_DIAS, observacoesPadrao = ''): OrcamentoDraft {
   if (existing) {
     return {
       dataOrcamento: existing.dataOrcamento,
@@ -44,8 +45,8 @@ function draftFromExisting(existing?: Orcamento): OrcamentoDraft {
     dataOrcamento: todayIso(),
     servicoCliente: '',
     status: 'rascunho',
-    observacoes: '',
-    validadeDias: DEFAULT_VALIDADE_DIAS,
+    observacoes: observacoesPadrao,
+    validadeDias: validadePadraoDias,
     total: 0,
     itens: createInitialItems(DEFAULT_ITEM_ROWS),
   }
@@ -54,10 +55,24 @@ function draftFromExisting(existing?: Orcamento): OrcamentoDraft {
 export function OrcamentoEditor({ existing }: Props) {
   const navigate = useNavigate()
   const profile = useAuthStore((state) => state.profile)
-  const [draft, setDraft] = useState<OrcamentoDraft>(() => draftFromExisting(existing))
+  const settings = useSystemSettingsStore((state) => state.settings)
+  const settingsLoaded = useSystemSettingsStore((state) => state.loaded)
+  const [draft, setDraft] = useState<OrcamentoDraft>(() =>
+    draftFromExisting(existing, settings.validadePadraoDias, settings.observacoesPadrao),
+  )
   const [saving, setSaving] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const total = useMemo(() => calculateGeneralTotal(draft.itens), [draft.itens])
+
+  useEffect(() => {
+    if (existing || !settingsLoaded) return
+    setDraft((current) => ({
+      ...current,
+      validadeDias:
+        current.validadeDias === DEFAULT_VALIDADE_DIAS ? settings.validadePadraoDias : current.validadeDias,
+      observacoes: current.observacoes ? current.observacoes : settings.observacoesPadrao,
+    }))
+  }, [existing, settingsLoaded, settings.observacoesPadrao, settings.validadePadraoDias])
 
   const preview: Orcamento = {
     id: existing?.id ?? 'preview',
