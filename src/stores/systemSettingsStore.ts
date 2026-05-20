@@ -39,7 +39,7 @@ export const useSystemSettingsStore = create<SystemSettingsState>((set) => ({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Não foi possível salvar as configurações.'
       set({ loading: false, error: message })
-      throw new Error(message)
+      throw new Error(message, { cause: err })
     }
   },
 }))

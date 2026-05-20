@@ -39,6 +39,7 @@ describe('supabase migration contract', () => {
 
   it('adds client registry tables with RLS, audit logs and optional quotation links', () => {
     expect(migrationSql).toContain('create table if not exists public.clientes')
+    expect(migrationSql).toContain("add column if not exists rg text not null default ''")
     expect(migrationSql).toContain('create table if not exists public.cliente_representantes')
     expect(migrationSql).toContain('create table if not exists public.activity_logs')
     expect(migrationSql).toContain('add column if not exists cliente_id uuid references public.clientes(id)')

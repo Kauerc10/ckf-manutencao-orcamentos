@@ -29,6 +29,7 @@ type SupabaseClienteRow = {
   tipo: Cliente['tipo']
   nome: string
   documento: string
+  rg: string
   nome_fantasia: string
   email: string
   telefone_principal: string
@@ -79,7 +80,10 @@ function readClientesLocal(): Cliente[] {
   }
 
   try {
-    return JSON.parse(raw) as Cliente[]
+    return (JSON.parse(raw) as Cliente[]).map((cliente) => ({
+      ...cliente,
+      rg: cliente.rg ?? '',
+    }))
   } catch {
     localStorage.setItem(CLIENTES_STORAGE_KEY, JSON.stringify(DEMO_CLIENTES))
     return DEMO_CLIENTES
@@ -132,6 +136,7 @@ function mapCliente(row: SupabaseClienteRow): Cliente {
     tipo: row.tipo,
     nome: row.nome,
     documento: normalizeDocumento(row.documento),
+    rg: row.rg ?? '',
     nomeFantasia: row.nome_fantasia ?? '',
     email: row.email ?? '',
     telefonePrincipal: row.telefone_principal,
@@ -162,6 +167,7 @@ function toClientePayload(input: ClienteDraft) {
     tipo: input.tipo,
     nome: input.nome.trim(),
     documento: normalizeDocumento(input.documento),
+    rg: input.rg.trim(),
     nome_fantasia: input.nomeFantasia.trim(),
     email: input.email.trim(),
     telefone_principal: input.telefonePrincipal.trim(),

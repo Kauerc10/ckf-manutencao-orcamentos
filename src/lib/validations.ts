@@ -1,5 +1,12 @@
 import { z } from 'zod'
-import { isValidCnpj, isValidCpf, normalizeDocumento } from './clientes'
+import {
+  isValidCnpj,
+  isValidCpf,
+  normalizeClienteRepresentantesForSave,
+  normalizeDocumento,
+  normalizeRg,
+  sanitizeClienteDraftByTipo,
+} from './clientes'
 import { MAX_ITEM_ROWS } from './constants'
 import { calculateItemTotal } from './orcamento'
 import { CLIENTE_TIPOS, ORCAMENTO_STATUSES } from '../types'
@@ -69,12 +76,17 @@ export type SystemSettingsFormValues = z.infer<typeof systemSettingsSchema>
 
 const optionalEmail = z.union([z.string().trim().email('Informe um email valido.'), z.literal(''), z.undefined()]).default('')
 const optionalText = z.string().trim().optional().default('')
+const optionalUf = z
+  .string()
+  .trim()
+  .transform((value) => value.toUpperCase())
+  .refine((value) => value === '' || value.length === 2, 'Informe a UF com 2 letras.')
 
 export const clienteRepresentanteSchema = z.object({
   id: z.string().optional(),
   nome: z.string().trim().min(2, 'Informe o nome do representante.'),
-  cargo: z.string().trim().min(2, 'Informe o cargo do representante.'),
-  telefone: z.string().trim().min(8, 'Informe o telefone do representante.'),
+  cargo: optionalText,
+  telefone: optionalText,
   email: optionalEmail,
   observacao: optionalText,
   principal: z.boolean().default(false),
@@ -86,23 +98,27 @@ export const clienteFormSchema = z
     tipo: z.enum(CLIENTE_TIPOS),
     nome: z.string().trim().min(2, 'Informe o nome ou razao social.'),
     documento: z.string().transform(normalizeDocumento),
+    rg: optionalText.transform(normalizeRg),
     nomeFantasia: optionalText,
     email: optionalEmail,
     telefonePrincipal: z.string().trim().min(8, 'Informe o telefone principal.'),
     telefoneAlternativo: optionalText,
     inscricaoEstadual: optionalText,
-    cep: z.string().trim().min(8, 'Informe o CEP.'),
-    logradouro: z.string().trim().min(2, 'Informe o logradouro.'),
-    numero: z.string().trim().min(1, 'Informe o numero.'),
+    cep: optionalText,
+    logradouro: optionalText,
+    numero: optionalText,
     complemento: optionalText,
-    bairro: z.string().trim().min(2, 'Informe o bairro.'),
-    cidade: z.string().trim().min(2, 'Informe a cidade.'),
-    uf: z.string().trim().length(2, 'Informe a UF.').transform((value) => value.toUpperCase()),
+    bairro: optionalText,
+    cidade: optionalText,
+    uf: optionalUf,
     referenciaAcesso: optionalText,
     observacoes: optionalText,
     tags: z.array(z.string()).default([]),
     ativo: z.boolean().default(true),
-    representantes: z.array(clienteRepresentanteSchema).default([]),
+    representantes: z.preprocess(
+      (value) => (Array.isArray(value) ? normalizeClienteRepresentantesForSave(value) : value),
+      z.array(clienteRepresentanteSchema).default([]),
+    ),
   })
   .superRefine((data, ctx) => {
     if (data.tipo === 'cpf' && !isValidCpf(data.documento)) {
@@ -112,14 +128,7 @@ export const clienteFormSchema = z
     if (data.tipo === 'cnpj' && !isValidCnpj(data.documento)) {
       ctx.addIssue({ code: 'custom', path: ['documento'], message: 'Informe um CNPJ valido.' })
     }
-
-    if (data.tipo === 'cnpj' && !data.representantes.some((representante) => representante.principal && representante.ativo)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['representantes'],
-        message: 'Cadastre ao menos um representante principal para CNPJ.',
-      })
-    }
   })
+  .transform((data) => sanitizeClienteDraftByTipo(data, data.tipo))
 
 export type ClienteFormValues = z.infer<typeof clienteFormSchema>

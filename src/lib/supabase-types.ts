@@ -77,6 +77,7 @@ export type Database = {
           tipo: ClienteTipo
           nome: string
           documento: string
+          rg: string
           nome_fantasia: string
           email: string
           telefone_principal: string
@@ -102,6 +103,7 @@ export type Database = {
           tipo: ClienteTipo
           nome: string
           documento: string
+          rg?: string
           telefone_principal: string
           cep: string
           logradouro: string
@@ -125,6 +127,7 @@ export type Database = {
           tipo?: ClienteTipo
           nome?: string
           documento?: string
+          rg?: string
           nome_fantasia?: string
           email?: string
           telefone_principal?: string

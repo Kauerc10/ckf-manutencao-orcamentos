@@ -79,6 +79,7 @@ export function OrcamentoEditor({ existing }: Props) {
 
   useEffect(() => {
     if (existing || !settingsLoaded) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate defaults after async settings load
     setDraft((current) => ({
       ...current,
       validadeDias:
@@ -114,6 +115,7 @@ export function OrcamentoEditor({ existing }: Props) {
     const cliente = clientes.find((item) => item.id === clienteId)
     if (!cliente) return
     const principal = cliente.representantes.find((representante) => representante.principal && representante.ativo)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate quotation draft from selected client when entering through quick action
     setDraft((current) => ({
       ...current,
       clienteId: cliente.id,

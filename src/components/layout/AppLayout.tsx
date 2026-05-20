@@ -1,5 +1,5 @@
 import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, Users, X } from 'lucide-react'
-import { type ReactNode, useCallback, useEffect, useState } from 'react'
+import { type ReactNode, useCallback, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { BRAND_ASSETS } from '../../lib/constants'
@@ -15,14 +15,11 @@ export function AppLayout({ children }: Props) {
   const profile = useAuthStore((state) => state.profile)
   const mode = useAuthStore((state) => state.mode)
   const logout = useAuthStore((state) => state.logout)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerState, setDrawerState] = useState({ open: false, pathname: location.pathname })
+  const drawerOpen = drawerState.open && drawerState.pathname === location.pathname
 
-  // Close the mobile drawer whenever the route changes
-  useEffect(() => {
-    setDrawerOpen(false)
-  }, [location.pathname])
-
-  const closeDrawer = useCallback(() => setDrawerOpen(false), [])
+  const closeDrawer = useCallback(() => setDrawerState((current) => ({ ...current, open: false })), [])
+  const openDrawer = useCallback(() => setDrawerState({ open: true, pathname: location.pathname }), [location.pathname])
 
   async function handleLogout() {
     await logout()
@@ -79,7 +76,7 @@ export function AppLayout({ children }: Props) {
 
       {/* ── Mobile header (hidden on desktop via CSS) ── */}
       <header className="mobile-header mobile-only">
-        <button className="mobile-menu-btn" type="button" onClick={() => setDrawerOpen(true)} aria-label="Abrir menu">
+        <button className="mobile-menu-btn" type="button" onClick={openDrawer} aria-label="Abrir menu">
           <Menu size={22} />
         </button>
         <div className="mobile-brand">

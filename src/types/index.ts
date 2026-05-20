@@ -68,6 +68,7 @@ export type Cliente = {
   tipo: ClienteTipo
   nome: string
   documento: string
+  rg: string
   nomeFantasia: string
   email: string
   telefonePrincipal: string
