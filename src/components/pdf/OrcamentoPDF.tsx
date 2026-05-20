@@ -1,4 +1,7 @@
+import React from 'react'
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+// NOTE: React-PDF's <Image> does not support onError in all versions.
+// We use a safe wrapper that catches render errors at the component level.
 import { BRAND_ASSETS, DEFAULT_SYSTEM_SETTINGS } from '../../lib/constants'
 import { formatCurrency, formatDateBR, formatOrcamentoNumero } from '../../lib/formatters'
 import { normalizeItemsForDocument } from '../../lib/orcamento'
@@ -94,6 +97,31 @@ type Props = {
   settings?: SystemSettings
 }
 
+/**
+ * SafeLogoImage – React-PDF class error boundary.
+ * Falls back to brand name text if the Image asset fails to load.
+ */
+class SafeLogoImage extends React.Component<
+  { src: string; style: import('@react-pdf/types').Style; brandName: string },
+  { hasError: boolean }
+> {
+  constructor(props: { src: string; style: import('@react-pdf/types').Style; brandName: string }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <Text style={{ fontSize: 22, fontWeight: 700, color: '#E6E8EA', marginBottom: 6, letterSpacing: 1.5 }}>{this.props.brandName}</Text>
+    }
+    return <Image src={this.props.src} style={this.props.style} />
+  }
+}
+
 export function OrcamentoPDF({ orcamento, settings = DEFAULT_SYSTEM_SETTINGS }: Props) {
   const rows = normalizeItemsForDocument(orcamento.itens)
 
@@ -102,7 +130,11 @@ export function OrcamentoPDF({ orcamento, settings = DEFAULT_SYSTEM_SETTINGS }: 
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           {settings.mostrarLogoDocumentos ? (
-            <Image src={BRAND_ASSETS.logoHorizontalWhiteAmberPng} style={styles.logo} />
+            <SafeLogoImage
+              src={BRAND_ASSETS.logoHorizontalWhiteAmberPng}
+              style={styles.logo}
+              brandName={settings.empresa.nome}
+            />
           ) : (
             <Text style={styles.brand}>{settings.empresa.nome}</Text>
           )}

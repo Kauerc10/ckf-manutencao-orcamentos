@@ -1,6 +1,6 @@
-import { Eye, Plus, RefreshCw, Save, Trash2, X } from 'lucide-react'
+import { Eye, Plus, Save, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { saveOrcamento } from '../../data/orcamentoRepository'
 import { DEFAULT_ITEM_ROWS, DEFAULT_VALIDADE_DIAS, MAX_ITEM_ROWS } from '../../lib/constants'
@@ -12,6 +12,8 @@ import { useSystemSettingsStore } from '../../stores/systemSettingsStore'
 import { useClientes } from '../../hooks/useClientes'
 import type { Orcamento, OrcamentoDraft, OrcamentoItem, OrcamentoStatus } from '../../types'
 import { DocumentPreview } from './DocumentPreview'
+import { ClientePicker } from '../cliente/ClientePicker'
+import { RepresentantePicker } from '../cliente/RepresentantePicker'
 
 type Props = {
   existing?: Orcamento
@@ -134,7 +136,7 @@ export function OrcamentoEditor({ existing }: Props) {
     }))
   }, [clientes, draft.clienteId, existing, searchParams])
 
-  function selectCliente(clienteId: string) {
+  function selectCliente(clienteId: string | null) {
     const cliente = clientes.find((item) => item.id === clienteId)
     if (!cliente) {
       setDraft((current) => ({
@@ -160,7 +162,7 @@ export function OrcamentoEditor({ existing }: Props) {
     }))
   }
 
-  function selectRepresentante(representanteId: string) {
+  function selectRepresentante(representanteId: string | null) {
     const cliente = clientes.find((item) => item.id === draft.clienteId)
     const representante = cliente?.representantes.find((item) => item.id === representanteId)
     setDraft((current) => ({
@@ -249,50 +251,24 @@ export function OrcamentoEditor({ existing }: Props) {
           ) : null}
 
           <div className="form-grid">
-            <label>
-              Cliente cadastrado
-              <select value={draft.clienteId ?? ''} onChange={(event) => selectCliente(event.target.value)}>
-                <option value="">Sem vínculo</option>
-                {clientes
-                  .filter((cliente) => cliente.ativo)
-                  .map((cliente) => (
-                    <option key={cliente.id} value={cliente.id}>
-                      {cliente.nome}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              Representante
-              <select
-                value={draft.representanteId ?? ''}
-                onChange={(event) => selectRepresentante(event.target.value)}
-                disabled={!draft.clienteId}
-              >
-                <option value="">Não informado</option>
-                {clientes
-                  .find((cliente) => cliente.id === draft.clienteId)
-                  ?.representantes.filter((representante) => representante.ativo)
-                  .map((representante) => (
-                    <option key={representante.id} value={representante.id}>
-                      {representante.nome} · {representante.cargo}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label className="span-2 quick-client-link">
-              Cliente ainda não cadastrado
-              <div className="button-row">
-                <Link className="secondary-button" to="/clientes/novo" target="_blank">
-                  <Plus size={16} />
-                  Cadastrar em nova aba
-                </Link>
-                <button className="secondary-button" type="button" onClick={() => void reloadClientes()}>
-                  <RefreshCw size={16} />
-                  Atualizar clientes
-                </button>
-              </div>
-            </label>
+            <div className="span-2">
+              <label>Cliente cadastrado</label>
+              <ClientePicker
+                clientes={clientes}
+                selectedClienteId={draft.clienteId ?? null}
+                onSelectCliente={selectCliente}
+                reloadClientes={reloadClientes}
+              />
+            </div>
+            {clientes.find((c) => c.id === draft.clienteId)?.tipo === 'cnpj' ? (
+              <RepresentantePicker
+                cliente={clientes.find((c) => c.id === draft.clienteId) || null}
+                selectedRepresentanteId={draft.representanteId ?? null}
+                onSelectRepresentante={selectRepresentante}
+              />
+            ) : (
+              <div></div>
+            )}
             <label>
               Data
               <input
@@ -333,8 +309,15 @@ export function OrcamentoEditor({ existing }: Props) {
             </label>
           </div>
 
-          <div className="items-toolbar">
-            <h3>Itens</h3>
+          <div className="items-toolbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <h3>Itens</h3>
+              {draft.itens.length >= MAX_ITEM_ROWS && (
+                <span style={{ fontSize: '0.75rem', color: '#ea580c', backgroundColor: '#ffedd5', padding: '0.25rem 0.5rem', borderRadius: '0.375rem', fontWeight: 500 }}>
+                  Limite máximo de {MAX_ITEM_ROWS} itens atingido para formatação correta do PDF/Excel
+                </span>
+              )}
+            </div>
             <button className="secondary-button" type="button" onClick={addItem} disabled={isDeleted || draft.itens.length >= MAX_ITEM_ROWS}>
               <Plus size={16} />
               Adicionar linha

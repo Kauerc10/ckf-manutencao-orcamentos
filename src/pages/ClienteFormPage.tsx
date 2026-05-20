@@ -70,14 +70,15 @@ function draftFromCliente(cliente: Cliente): ClienteDraft {
     {
       tipo: cliente.tipo,
       nome: cliente.nome,
-      documento: cliente.documento,
-      rg: cliente.rg,
+      // Re-apply masks so the form shows formatted values instead of raw DB strings (BUG-07)
+      documento: formatClienteDocumento(cliente.documento),
+      rg: formatRg(cliente.rg ?? ''),
       nomeFantasia: cliente.nomeFantasia,
       email: cliente.email,
-      telefonePrincipal: cliente.telefonePrincipal,
-      telefoneAlternativo: cliente.telefoneAlternativo,
+      telefonePrincipal: formatPhone(cliente.telefonePrincipal),
+      telefoneAlternativo: formatPhone(cliente.telefoneAlternativo),
       inscricaoEstadual: cliente.inscricaoEstadual,
-      cep: cliente.cep,
+      cep: formatCep(cliente.cep),
       logradouro: cliente.logradouro,
       numero: cliente.numero,
       complemento: cliente.complemento,
@@ -151,6 +152,16 @@ export function ClienteFormPage() {
   }
 
   function setTipo(tipo: ClienteTipo) {
+    // BUG-09: Guard against silently discarding existing representatives when switching to CPF
+    if (tipo === 'cpf') {
+      const hasRepresentantes = draft.representantes.some((r) => r.nome.trim() !== '' || r.cargo.trim() !== '' || r.telefone.trim() !== '')
+      if (hasRepresentantes) {
+        const confirmed = window.confirm(
+          'Ao alterar para CPF, todos os representantes cadastrados serão removidos. Deseja continuar?'
+        )
+        if (!confirmed) return
+      }
+    }
     setDraft((current) => sanitizeClienteDraftByTipo(current, tipo))
   }
 
@@ -163,9 +174,11 @@ export function ClienteFormPage() {
 
   function removeRepresentante(index: number) {
     setDraft((current) => {
+      // BUG-11: Allow empty list — don't inject blank representante when deleting the last one
       const remaining = current.representantes.filter((_, currentIndex) => currentIndex !== index)
-      if (remaining.length === 0) return { ...current, representantes: [emptyRepresentante(true)] }
-      if (!remaining.some((representante) => representante.principal)) remaining[0] = { ...remaining[0], principal: true }
+      if (remaining.length > 0 && !remaining.some((representante) => representante.principal)) {
+        remaining[0] = { ...remaining[0], principal: true }
+      }
       return { ...current, representantes: remaining }
     })
   }

@@ -10,6 +10,8 @@ begin
   end if;
 end $$;
 
+alter table public.orcamentos disable trigger user;
+
 update public.orcamentos o
 set representante_id = null
 where representante_id is not null
@@ -19,6 +21,8 @@ where representante_id is not null
     where r.id = o.representante_id
       and r.cliente_id = o.cliente_id
   );
+
+alter table public.orcamentos enable trigger user;
 
 do $$
 begin

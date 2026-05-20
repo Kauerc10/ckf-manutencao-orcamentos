@@ -27,6 +27,14 @@ using (private.is_admin());
 alter table public.orcamentos
   add column if not exists exclusao_solicitada_por uuid references public.profiles(id);
 
+alter table public.orcamentos disable trigger user;
+
+update public.orcamentos
+set exclusao_solicitada_por = criado_por
+where status = 'excluido' and exclusao_solicitada_por is null;
+
+alter table public.orcamentos enable trigger user;
+
 create index if not exists orcamentos_exclusao_solicitada_por_idx
 on public.orcamentos(exclusao_solicitada_por);
 
