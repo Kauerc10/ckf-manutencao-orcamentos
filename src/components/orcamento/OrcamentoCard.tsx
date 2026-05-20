@@ -34,6 +34,7 @@ export function OrcamentoCard({ orcamento, canDelete = false, onDelete, onDuplic
       <div className="card-body">
         <div className="card-info">
           <strong className="card-client">{orcamento.servicoCliente}</strong>
+          {orcamento.clienteNome ? <span>{orcamento.clienteNome}</span> : null}
           <span className="card-total">{formatCurrency(orcamento.total)}</span>
         </div>
         {isDeleted ? (

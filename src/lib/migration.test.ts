@@ -37,6 +37,22 @@ describe('supabase migration contract', () => {
     expect(migrationSql).toContain('grant update (nome) on table public.profiles to authenticated')
   })
 
+  it('adds client registry tables with RLS, audit logs and optional quotation links', () => {
+    expect(migrationSql).toContain('create table if not exists public.clientes')
+    expect(migrationSql).toContain("add column if not exists rg text not null default ''")
+    expect(migrationSql).toContain('create table if not exists public.cliente_representantes')
+    expect(migrationSql).toContain('create table if not exists public.activity_logs')
+    expect(migrationSql).toContain('add column if not exists cliente_id uuid references public.clientes(id)')
+    expect(migrationSql).toContain('add column if not exists representante_id uuid references public.cliente_representantes(id)')
+    expect(migrationSql).toContain('alter table public.clientes enable row level security')
+    expect(migrationSql).toContain('grant select, insert, update on table public.clientes to authenticated')
+    expect(migrationSql).toContain('private.log_activity')
+    expect(migrationSql).toContain("entity_type = 'cliente'")
+    expect(migrationSql).toContain('constraint cliente_representantes_id_cliente_unique unique (id, cliente_id)')
+    expect(migrationSql).toContain('constraint orcamentos_representante_requires_cliente')
+    expect(migrationSql).toContain('constraint orcamentos_representante_cliente_fk')
+  })
+
   it('keeps deleted quotations auditable and blocks physical quotation deletes', () => {
     expect(migrationSql).toContain("alter type public.orcamento_status add value if not exists 'excluido'")
     expect(migrationSql).toContain('add column if not exists excluido_em timestamptz')
@@ -53,11 +69,17 @@ describe('supabase migration contract', () => {
   it('routes admin-approved quotation deletion through hardened database boundaries', () => {
     expect(migrationSql).toContain('create table if not exists public.activity_logs')
     expect(migrationSql).toContain('create or replace function private.delete_orcamento_with_admin_approval')
-    expect(migrationSql).toContain('revoke all on function private.delete_orcamento_with_admin_approval(uuid, text, uuid, uuid) from public, anon, authenticated')
+    expect(migrationSql).toContain(
+      'revoke all on function private.delete_orcamento_with_admin_approval(uuid, text, uuid, uuid) from public, anon, authenticated',
+    )
     expect(migrationSql).toContain('new.excluido_em = now()')
     expect(migrationSql).toContain('new.excluido_por is null')
     expect(migrationSql).toContain('revoke update on table public.orcamentos from authenticated')
-    expect(migrationSql).toContain('grant update (data_orcamento, servico_cliente, status, observacoes, validade_dias, total) on table public.orcamentos to authenticated')
+    expect(migrationSql).toContain(
+      'grant update (data_orcamento, servico_cliente, status, observacoes, validade_dias, total) on table public.orcamentos to authenticated',
+    )
+    expect(migrationSql).toContain('cliente_id')
+    expect(migrationSql).toContain('representante_id')
     expect(migrationSql).toContain('private.orcamento_is_editable')
     expect(migrationSql).toContain("status <> 'excluido'")
     expect(migrationSql).toContain("'delete_approved'")

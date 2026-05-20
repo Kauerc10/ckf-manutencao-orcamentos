@@ -1,6 +1,6 @@
-import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, X } from 'lucide-react'
+import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, Users, X } from 'lucide-react'
 import { type ReactNode, useCallback, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { BRAND_ASSETS } from '../../lib/constants'
 import { useAuthStore } from '../../stores/authStore'
@@ -11,12 +11,15 @@ type Props = {
 
 export function AppLayout({ children }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
   const profile = useAuthStore((state) => state.profile)
   const mode = useAuthStore((state) => state.mode)
   const logout = useAuthStore((state) => state.logout)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerState, setDrawerState] = useState({ open: false, pathname: location.pathname })
+  const drawerOpen = drawerState.open && drawerState.pathname === location.pathname
 
-  const closeDrawer = useCallback(() => setDrawerOpen(false), [])
+  const closeDrawer = useCallback(() => setDrawerState((current) => ({ ...current, open: false })), [])
+  const openDrawer = useCallback(() => setDrawerState({ open: true, pathname: location.pathname }), [location.pathname])
 
   async function handleLogout() {
     await logout()
@@ -40,6 +43,10 @@ export function AppLayout({ children }: Props) {
           <NavLink to="/orcamentos/novo">
             <Plus size={18} />
             Novo orçamento
+          </NavLink>
+          <NavLink to="/clientes">
+            <Users size={18} />
+            Clientes
           </NavLink>
           <NavLink to="/historico">
             <FileClock size={18} />
@@ -69,7 +76,7 @@ export function AppLayout({ children }: Props) {
 
       {/* ── Mobile header (hidden on desktop via CSS) ── */}
       <header className="mobile-header mobile-only">
-        <button className="mobile-menu-btn" type="button" onClick={() => setDrawerOpen(true)} aria-label="Abrir menu">
+        <button className="mobile-menu-btn" type="button" onClick={openDrawer} aria-label="Abrir menu">
           <Menu size={22} />
         </button>
         <div className="mobile-brand">
@@ -99,6 +106,10 @@ export function AppLayout({ children }: Props) {
               <NavLink to="/orcamentos/novo" onClick={closeDrawer}>
                 <Plus size={18} />
                 Novo orçamento
+              </NavLink>
+              <NavLink to="/clientes" onClick={closeDrawer}>
+                <Users size={18} />
+                Clientes
               </NavLink>
               <NavLink to="/historico" onClick={closeDrawer}>
                 <FileClock size={18} />
@@ -152,6 +163,10 @@ export function AppLayout({ children }: Props) {
         <NavLink to="/orcamentos/novo" className="bottom-nav-item">
           <Plus size={20} />
           <span>Novo</span>
+        </NavLink>
+        <NavLink to="/clientes" className="bottom-nav-item">
+          <Users size={20} />
+          <span>Clientes</span>
         </NavLink>
         <NavLink to="/historico" className="bottom-nav-item">
           <FileClock size={20} />

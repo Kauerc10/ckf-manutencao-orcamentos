@@ -8,6 +8,7 @@ export const DEFAULT_FILTERS: OrcamentoFilters = {
   dataInicial: '',
   dataFinal: '',
   criadoPor: '',
+  clienteId: '',
 }
 
 export function useOrcamentos(filters: OrcamentoFilters = DEFAULT_FILTERS) {

@@ -6,10 +6,12 @@ import { OrcamentoList } from '../components/orcamento/OrcamentoList'
 import { formatCurrency } from '../lib/formatters'
 import { DEFAULT_FILTERS, useOrcamentos } from '../hooks/useOrcamentos'
 import { useOrcamentoActions } from '../hooks/useOrcamentoActions'
+import { useClientes } from '../hooks/useClientes'
 
 export function Dashboard() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const { orcamentos, filtered, creators, loading, error, reload } = useOrcamentos(filters)
+  const { clientes } = useClientes()
   const actions = useOrcamentoActions(reload)
 
   const kpis = useMemo(() => {
@@ -49,7 +51,7 @@ export function Dashboard() {
             Ver histórico completo
           </Link>
         </div>
-        <OrcamentoFilters filters={filters} onChange={setFilters} creators={creators} />
+        <OrcamentoFilters filters={filters} onChange={setFilters} creators={creators} clientes={clientes} />
         {loading ? <div className="skeleton-block">Carregando orçamentos...</div> : null}
         {error ? <div className="error-state">{error}</div> : null}
         {!loading ? (

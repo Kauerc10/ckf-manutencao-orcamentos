@@ -12,7 +12,7 @@ export const EMPRESA: CompanySettings = {
 
 export const DOCUMENT_ITEM_ROW_COUNT = 14
 export const DEFAULT_ITEM_ROWS = 5
-export const MAX_ITEM_ROWS = 20
+export const MAX_ITEM_ROWS = 14
 export const ORCAMENTO_SEQUENCE_START = 285
 
 export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {

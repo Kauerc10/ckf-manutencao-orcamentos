@@ -22,7 +22,7 @@ export function Configuracoes() {
   const [form, setForm] = useState<SystemSettings>(() => cloneSettings(settings))
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- keep editable form in sync after async settings refresh
     setForm(cloneSettings(settings))
   }, [settings])
 

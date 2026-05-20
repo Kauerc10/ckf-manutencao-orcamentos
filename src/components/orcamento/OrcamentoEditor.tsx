@@ -1,6 +1,6 @@
 import { Eye, Plus, Save, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { saveOrcamento } from '../../data/orcamentoRepository'
 import { DEFAULT_ITEM_ROWS, DEFAULT_VALIDADE_DIAS, MAX_ITEM_ROWS } from '../../lib/constants'
@@ -9,8 +9,11 @@ import { calculateGeneralTotal, calculateItemTotal, createInitialItems } from '.
 import { orcamentoFormSchema } from '../../lib/validations'
 import { useAuthStore } from '../../stores/authStore'
 import { useSystemSettingsStore } from '../../stores/systemSettingsStore'
+import { useClientes } from '../../hooks/useClientes'
 import type { Orcamento, OrcamentoDraft, OrcamentoItem, OrcamentoStatus } from '../../types'
 import { DocumentPreview } from './DocumentPreview'
+import { ClientePicker } from '../cliente/ClientePicker'
+import { RepresentantePicker } from '../cliente/RepresentantePicker'
 
 type Props = {
   existing?: Orcamento
@@ -33,6 +36,11 @@ function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VA
     return {
       dataOrcamento: existing.dataOrcamento,
       servicoCliente: existing.servicoCliente,
+      clienteId: existing.clienteId ?? null,
+      clienteNome: existing.clienteNome ?? null,
+      clienteDocumento: existing.clienteDocumento ?? null,
+      representanteId: existing.representanteId ?? null,
+      representanteNome: existing.representanteNome ?? null,
       status: existing.status,
       observacoes: existing.observacoes,
       validadeDias: existing.validadeDias,
@@ -44,6 +52,11 @@ function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VA
   return {
     dataOrcamento: todayIso(),
     servicoCliente: '',
+    clienteId: null,
+    clienteNome: null,
+    clienteDocumento: null,
+    representanteId: null,
+    representanteNome: null,
     status: 'rascunho',
     observacoes: observacoesPadrao,
     validadeDias: validadePadraoDias,
@@ -54,9 +67,11 @@ function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VA
 
 export function OrcamentoEditor({ existing }: Props) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const profile = useAuthStore((state) => state.profile)
   const settings = useSystemSettingsStore((state) => state.settings)
   const settingsLoaded = useSystemSettingsStore((state) => state.loaded)
+  const { clientes, reload: reloadClientes } = useClientes()
   const [draft, setDraft] = useState<OrcamentoDraft>(() =>
     draftFromExisting(existing, settings.validadePadraoDias, settings.observacoesPadrao),
   )
@@ -67,7 +82,7 @@ export function OrcamentoEditor({ existing }: Props) {
 
   useEffect(() => {
     if (existing || !settingsLoaded) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate defaults after async settings load
     setDraft((current) => ({
       ...current,
       validadeDias:
@@ -81,6 +96,11 @@ export function OrcamentoEditor({ existing }: Props) {
     numero: existing?.numero ?? 0,
     dataOrcamento: draft.dataOrcamento,
     servicoCliente: draft.servicoCliente,
+    clienteId: draft.clienteId,
+    clienteNome: draft.clienteNome,
+    clienteDocumento: draft.clienteDocumento,
+    representanteId: draft.representanteId,
+    representanteNome: draft.representanteNome,
     status: draft.status,
     observacoes: draft.observacoes,
     validadeDias: draft.validadeDias,
@@ -96,6 +116,60 @@ export function OrcamentoEditor({ existing }: Props) {
     exclusaoSolicitadaPorNome: existing?.exclusaoSolicitadaPorNome ?? null,
     excluidoMotivo: existing?.excluidoMotivo ?? null,
     itens: draft.itens.map((item) => ({ ...item, valorTotal: calculateItemTotal(item) })),
+  }
+
+  useEffect(() => {
+    const clienteId = searchParams.get('clienteId')
+    if (!clienteId || existing || !clientes.length || draft.clienteId) return
+    const cliente = clientes.find((item) => item.id === clienteId)
+    if (!cliente) return
+    const principal = cliente.representantes.find((representante) => representante.principal && representante.ativo)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate quotation draft from selected client when entering through quick action
+    setDraft((current) => ({
+      ...current,
+      clienteId: cliente.id,
+      clienteNome: cliente.nome,
+      clienteDocumento: cliente.documento,
+      representanteId: principal?.id ?? null,
+      representanteNome: principal?.nome ?? null,
+      servicoCliente: current.servicoCliente.trim() ? current.servicoCliente : cliente.nome,
+    }))
+  }, [clientes, draft.clienteId, existing, searchParams])
+
+  function selectCliente(clienteId: string | null) {
+    const cliente = clientes.find((item) => item.id === clienteId)
+    if (!cliente) {
+      setDraft((current) => ({
+        ...current,
+        clienteId: null,
+        clienteNome: null,
+        clienteDocumento: null,
+        representanteId: null,
+        representanteNome: null,
+      }))
+      return
+    }
+
+    const principal = cliente.representantes.find((representante) => representante.principal && representante.ativo)
+    setDraft((current) => ({
+      ...current,
+      clienteId: cliente.id,
+      clienteNome: cliente.nome,
+      clienteDocumento: cliente.documento,
+      representanteId: principal?.id ?? null,
+      representanteNome: principal?.nome ?? null,
+      servicoCliente: current.servicoCliente.trim() ? current.servicoCliente : cliente.nome,
+    }))
+  }
+
+  function selectRepresentante(representanteId: string | null) {
+    const cliente = clientes.find((item) => item.id === draft.clienteId)
+    const representante = cliente?.representantes.find((item) => item.id === representanteId)
+    setDraft((current) => ({
+      ...current,
+      representanteId: representante?.id ?? null,
+      representanteNome: representante?.nome ?? null,
+    }))
   }
 
   function updateItem(index: number, patch: Partial<OrcamentoItem>) {
@@ -177,6 +251,24 @@ export function OrcamentoEditor({ existing }: Props) {
           ) : null}
 
           <div className="form-grid">
+            <div className="span-2">
+              <label>Cliente cadastrado</label>
+              <ClientePicker
+                clientes={clientes}
+                selectedClienteId={draft.clienteId ?? null}
+                onSelectCliente={selectCliente}
+                reloadClientes={reloadClientes}
+              />
+            </div>
+            {clientes.find((c) => c.id === draft.clienteId)?.tipo === 'cnpj' ? (
+              <RepresentantePicker
+                cliente={clientes.find((c) => c.id === draft.clienteId) || null}
+                selectedRepresentanteId={draft.representanteId ?? null}
+                onSelectRepresentante={selectRepresentante}
+              />
+            ) : (
+              <div></div>
+            )}
             <label>
               Data
               <input
@@ -217,8 +309,15 @@ export function OrcamentoEditor({ existing }: Props) {
             </label>
           </div>
 
-          <div className="items-toolbar">
-            <h3>Itens</h3>
+          <div className="items-toolbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <h3>Itens</h3>
+              {draft.itens.length >= MAX_ITEM_ROWS && (
+                <span style={{ fontSize: '0.75rem', color: '#ea580c', backgroundColor: '#ffedd5', padding: '0.25rem 0.5rem', borderRadius: '0.375rem', fontWeight: 500 }}>
+                  Limite máximo de {MAX_ITEM_ROWS} itens atingido para formatação correta do PDF/Excel
+                </span>
+              )}
+            </div>
             <button className="secondary-button" type="button" onClick={addItem} disabled={isDeleted || draft.itens.length >= MAX_ITEM_ROWS}>
               <Plus size={16} />
               Adicionar linha

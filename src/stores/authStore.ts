@@ -62,8 +62,13 @@ export const useAuthStore = create<AuthState>((set) => ({
         return
       }
 
-      const profile = await loadSupabaseProfile(user.id)
-      set({ profile, loading: false, mode: 'supabase' })
+      try {
+        const profile = await loadSupabaseProfile(user.id)
+        set({ profile, loading: false, mode: 'supabase' })
+      } catch (error) {
+        await supabase.auth.signOut()
+        set({ profile: null, loading: false, mode: 'supabase' })
+      }
       return
     }
 
@@ -77,17 +82,22 @@ export const useAuthStore = create<AuthState>((set) => ({
       try {
         const email = await resolveEmail(identifier)
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        set({ loading: false })
-        throw error
-      }
-      if (!data.user) {
-        set({ loading: false })
-        throw new Error('Usuário não retornado pelo Supabase.')
-      }
-      const profile = await loadSupabaseProfile(data.user.id)
-      set({ profile, loading: false, mode: 'supabase' })
-      return
+        if (error) {
+          set({ loading: false })
+          throw error
+        }
+        if (!data.user) {
+          set({ loading: false })
+          throw new Error('Usuário não retornado pelo Supabase.')
+        }
+        try {
+          const profile = await loadSupabaseProfile(data.user.id)
+          set({ profile, loading: false, mode: 'supabase' })
+          return
+        } catch (profileError) {
+          await supabase.auth.signOut()
+          throw profileError
+        }
       } catch (error) {
         set({ loading: false })
         throw error
