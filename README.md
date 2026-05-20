@@ -219,6 +219,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 ```
 
 > Nunca publique arquivos `.env`, `.env.local`, `.env.production` ou qualquer arquivo contendo credenciais reais.
+> Chaves secretas, service role keys e URLs diretas de banco devem ficar apenas em ambientes server-side/Edge Functions do Supabase. O frontend deve usar somente a publishable key com RLS habilitado.
 
 ---
 

@@ -26,6 +26,8 @@ export type Orcamento = {
   excluidoEm?: string | null
   excluidoPor?: string | null
   excluidoPorNome?: string | null
+  exclusaoSolicitadaPor?: string | null
+  exclusaoSolicitadaPorNome?: string | null
   excluidoMotivo?: string | null
   itens: OrcamentoItem[]
 }

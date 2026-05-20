@@ -68,9 +68,11 @@ export function Dashboard() {
       <DeleteOrcamentoDialog
         orcamento={actions.pendingDelete}
         motivo={actions.deleteReason}
+        adminIdentifier={actions.adminIdentifier}
         senha={actions.adminPassword}
         deleting={actions.deleting}
         onMotivoChange={actions.setDeleteReason}
+        onAdminIdentifierChange={actions.setAdminIdentifier}
         onSenhaChange={actions.setAdminPassword}
         onCancel={actions.cancelDelete}
         onConfirm={actions.confirmDelete}

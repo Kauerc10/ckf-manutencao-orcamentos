@@ -86,6 +86,7 @@ export type Database = {
           atualizado_em: string
           excluido_em: string | null
           excluido_por: string | null
+          exclusao_solicitada_por: string | null
           excluido_motivo: string | null
         }
         Insert: {
@@ -95,9 +96,9 @@ export type Database = {
           observacoes?: string
           validade_dias?: number
           total: number
-          criado_por: string
           excluido_em?: string | null
           excluido_por?: string | null
+          exclusao_solicitada_por?: string | null
           excluido_motivo?: string | null
         }
         Update: {
@@ -109,6 +110,7 @@ export type Database = {
           total?: number
           excluido_em?: string | null
           excluido_por?: string | null
+          exclusao_solicitada_por?: string | null
           excluido_motivo?: string | null
         }
       }
