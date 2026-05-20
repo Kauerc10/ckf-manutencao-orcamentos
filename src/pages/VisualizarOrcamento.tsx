@@ -85,6 +85,10 @@ export function VisualizarOrcamento() {
           {isDeleted ? (
             <>
               <div>
+                <dt>Solicitado por</dt>
+                <dd>{orcamento.exclusaoSolicitadaPorNome ?? '-'}</dd>
+              </div>
+              <div>
                 <dt>Excluído por</dt>
                 <dd>{orcamento.excluidoPorNome ?? 'Admin'}</dd>
               </div>

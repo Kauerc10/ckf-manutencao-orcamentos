@@ -1,4 +1,4 @@
-import { DEMO_ORCAMENTOS } from '../lib/demo-data'
+import { DEMO_ORCAMENTOS, DEMO_PROFILE } from '../lib/demo-data'
 import { DEFAULT_VALIDADE_DIAS } from '../lib/constants'
 import { calculateGeneralTotal, createItemSyncPlan, normalizeItems } from '../lib/orcamento'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
@@ -13,6 +13,8 @@ type SaveInput = OrcamentoDraft & {
 type DeleteInput = {
   id: string
   motivo: string
+  adminIdentifier: string
+  adminPassword: string
 }
 
 type SupabaseOrcamentoRow = {
@@ -29,9 +31,11 @@ type SupabaseOrcamentoRow = {
   atualizado_em: string
   excluido_em?: string | null
   excluido_por?: string | null
+  exclusao_solicitada_por?: string | null
   excluido_motivo?: string | null
   profiles?: { nome: string; email: string } | null
   excluido_por_profile?: { nome: string; email: string } | null
+  exclusao_solicitada_por_profile?: { nome: string; email: string } | null
   orcamento_itens?: Array<{
     id: string
     quantidade: number | null
@@ -82,6 +86,9 @@ function mapSupabaseOrcamento(row: SupabaseOrcamentoRow): Orcamento {
     excluidoEm: row.excluido_em ?? null,
     excluidoPor: row.excluido_por ?? null,
     excluidoPorNome: row.excluido_por_profile?.nome ?? row.excluido_por_profile?.email ?? null,
+    exclusaoSolicitadaPor: row.exclusao_solicitada_por ?? null,
+    exclusaoSolicitadaPorNome:
+      row.exclusao_solicitada_por_profile?.nome ?? row.exclusao_solicitada_por_profile?.email ?? null,
     excluidoMotivo: row.excluido_motivo ?? null,
     itens: [...(row.orcamento_itens ?? [])]
       .sort((a, b) => a.ordem - b.ordem)
@@ -115,7 +122,9 @@ export async function listOrcamentos(): Promise<Orcamento[]> {
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase
       .from('orcamentos')
-      .select('*, profiles:profiles!orcamentos_criado_por_fkey(nome,email), excluido_por_profile:profiles!orcamentos_excluido_por_fkey(nome,email), orcamento_itens(*)')
+      .select(
+        '*, profiles:profiles!orcamentos_criado_por_fkey(nome,email), excluido_por_profile:profiles!orcamentos_excluido_por_fkey(nome,email), exclusao_solicitada_por_profile:profiles!orcamentos_exclusao_solicitada_por_fkey(nome,email), orcamento_itens(*)',
+      )
       .order('numero', { ascending: false })
 
     if (error) throw error
@@ -141,17 +150,53 @@ function normalizeDeletionReason(motivo: string): string {
   return motivo.trim().replace(/\s+/g, ' ')
 }
 
-function assertCanDeleteOrcamento(input: DeleteInput, profile: Profile): string {
-  if (profile.role !== 'admin') {
-    throw new Error('Apenas administradores podem excluir orcamentos.')
-  }
-
+function assertDeleteInput(input: DeleteInput): string {
   const motivo = normalizeDeletionReason(input.motivo)
   if (!motivo) {
     throw new Error('Informe o motivo da exclusao.')
   }
 
+  if (!input.adminIdentifier.trim() || !input.adminPassword.trim()) {
+    throw new Error('Informe as credenciais de administrador.')
+  }
+
   return motivo
+}
+
+function identifierMatchesProfile(identifier: string, profile: Profile): boolean {
+  const normalized = identifier.trim().toLowerCase()
+  return [
+    profile.email,
+    profile.nome,
+    profile.nome.split(/\s+/)[0],
+    'admin',
+  ]
+    .filter(Boolean)
+    .map((value) => value.toLowerCase())
+    .includes(normalized)
+}
+
+function approveLocalDeletion(input: DeleteInput): Profile {
+  if (!identifierMatchesProfile(input.adminIdentifier, DEMO_PROFILE) || input.adminPassword !== 'demo-local') {
+    throw new Error('Credenciais de administrador invalidas.')
+  }
+
+  return DEMO_PROFILE
+}
+
+async function readFunctionErrorMessage(error: unknown): Promise<string> {
+  const maybeContext = error && typeof error === 'object' && 'context' in error ? error.context : null
+  if (maybeContext instanceof Response) {
+    const body = await maybeContext
+      .clone()
+      .json()
+      .catch(() => null)
+    if (body && typeof body === 'object' && 'error' in body && typeof body.error === 'string') {
+      return body.error
+    }
+  }
+
+  return error instanceof Error ? error.message : 'Nao foi possivel excluir o orcamento.'
 }
 
 function assertEditable(orcamento: Orcamento): void {
@@ -248,7 +293,6 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
         observacoes: input.observacoes,
         validade_dias: input.validadeDias,
         total,
-        criado_por: profile.id,
       })
       .select('id')
       .single()
@@ -311,6 +355,8 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
     excluidoEm: null,
     excluidoPor: null,
     excluidoPorNome: null,
+    exclusaoSolicitadaPor: null,
+    exclusaoSolicitadaPorNome: null,
     excluidoMotivo: null,
     itens,
   }
@@ -320,29 +366,32 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
 }
 
 export async function deleteOrcamento(input: DeleteInput, profile: Profile): Promise<Orcamento> {
-  const motivo = assertCanDeleteOrcamento(input, profile)
+  const motivo = assertDeleteInput(input)
 
   if (isSupabaseConfigured && supabase) {
     const existing = await getOrcamento(input.id)
     if (!existing) throw new Error('Orcamento nao encontrado.')
     assertEditable(existing)
 
-    const { error } = await supabase
-      .from('orcamentos')
-      .update({
-        status: 'excluido',
-        excluido_em: new Date().toISOString(),
-        excluido_por: profile.id,
-        excluido_motivo: motivo,
-      })
-      .eq('id', input.id)
-    if (error) throw error
+    const { error } = await supabase.functions.invoke('admin-delete-orcamento', {
+      body: {
+        orcamentoId: input.id,
+        motivo,
+        adminIdentifier: input.adminIdentifier,
+        adminPassword: input.adminPassword,
+      },
+    })
+
+    if (error) {
+      throw new Error(await readFunctionErrorMessage(error))
+    }
 
     const deleted = await getOrcamento(input.id)
     if (!deleted) throw new Error('Orcamento excluido nao encontrado.')
     return deleted
   }
 
+  const approver = approveLocalDeletion(input)
   const now = new Date().toISOString()
   const all = readLocal()
   const existing = all.find((orcamento) => orcamento.id === input.id)
@@ -354,8 +403,10 @@ export async function deleteOrcamento(input: DeleteInput, profile: Profile): Pro
     status: 'excluido',
     atualizadoEm: now,
     excluidoEm: now,
-    excluidoPor: profile.id,
-    excluidoPorNome: profile.nome,
+    excluidoPor: approver.id,
+    excluidoPorNome: approver.nome,
+    exclusaoSolicitadaPor: profile.id,
+    exclusaoSolicitadaPorNome: profile.nome,
     excluidoMotivo: motivo,
   }
 

@@ -24,8 +24,17 @@ describe('orcamento repository deletion audit', () => {
     localStorage.clear()
   })
 
-  it('marks a quotation as deleted instead of removing it and keeps numbering traceable', async () => {
-    const deleted = await deleteOrcamento({ id: 'demo-2', motivo: 'Cliente solicitou remocao do registro.' }, DEMO_PROFILE)
+  it('marks a quotation as deleted with admin approval and keeps numbering traceable', async () => {
+    const requester: Profile = { ...DEMO_PROFILE, id: 'requester-1', nome: 'Tecnico CKF', role: 'usuario' }
+    const deleted = await deleteOrcamento(
+      {
+        id: 'demo-2',
+        motivo: 'Cliente solicitou remocao do registro.',
+        adminIdentifier: DEMO_PROFILE.email,
+        adminPassword: 'demo-local',
+      },
+      requester,
+    )
 
     expect(deleted).toMatchObject({
       id: 'demo-2',
@@ -33,6 +42,8 @@ describe('orcamento repository deletion audit', () => {
       status: 'excluido',
       excluidoPor: DEMO_PROFILE.id,
       excluidoPorNome: DEMO_PROFILE.nome,
+      exclusaoSolicitadaPor: requester.id,
+      exclusaoSolicitadaPorNome: requester.nome,
       excluidoMotivo: 'Cliente solicitou remocao do registro.',
     })
     expect(deleted.excluidoEm).toEqual(expect.any(String))
@@ -45,19 +56,34 @@ describe('orcamento repository deletion audit', () => {
     expect(all.find((orcamento) => orcamento.id === 'demo-2')?.status).toBe('excluido')
   })
 
-  it('requires admin role and a deletion reason', async () => {
-    const regularUser: Profile = { ...DEMO_PROFILE, role: 'usuario' }
+  it('requires a deletion reason and valid admin credentials', async () => {
+    await expect(
+      deleteOrcamento(
+        { id: 'demo-1', motivo: 'Duplicado.', adminIdentifier: DEMO_PROFILE.email, adminPassword: 'senha-errada' },
+        DEMO_PROFILE,
+      ),
+    ).rejects.toThrow('Credenciais de administrador invalidas.')
 
-    await expect(deleteOrcamento({ id: 'demo-1', motivo: 'Duplicado.' }, regularUser)).rejects.toThrow(
-      'Apenas administradores podem excluir orcamentos.',
-    )
-    await expect(deleteOrcamento({ id: 'demo-1', motivo: '   ' }, DEMO_PROFILE)).rejects.toThrow(
+    await expect(
+      deleteOrcamento(
+        { id: 'demo-1', motivo: '   ', adminIdentifier: DEMO_PROFILE.email, adminPassword: 'demo-local' },
+        DEMO_PROFILE,
+      ),
+    ).rejects.toThrow(
       'Informe o motivo da exclusao.',
     )
   })
 
   it('does not allow editing a deleted quotation', async () => {
-    await deleteOrcamento({ id: 'demo-1', motivo: 'Registro substituido por nova revisao.' }, DEMO_PROFILE)
+    await deleteOrcamento(
+      {
+        id: 'demo-1',
+        motivo: 'Registro substituido por nova revisao.',
+        adminIdentifier: DEMO_PROFILE.email,
+        adminPassword: 'demo-local',
+      },
+      DEMO_PROFILE,
+    )
 
     await expect(saveOrcamento({ ...validDraft, id: 'demo-1' }, DEMO_PROFILE)).rejects.toThrow(
       'Orcamentos excluidos nao podem ser editados.',

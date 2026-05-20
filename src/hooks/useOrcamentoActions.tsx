@@ -5,7 +5,6 @@ import { deleteOrcamento, saveOrcamento } from '../data/orcamentoRepository'
 import { downloadBlob } from '../lib/downloads'
 import { toOrcamentoFilename } from '../lib/formatters'
 import { createDuplicateDraft } from '../lib/orcamento'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/authStore'
 import { useSystemSettingsStore } from '../stores/systemSettingsStore'
 import type { Orcamento } from '../types'
@@ -16,9 +15,10 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
   const settings = useSystemSettingsStore((state) => state.settings)
   const [pendingDelete, setPendingDeleteState] = useState<Orcamento | null>(null)
   const [deleteReason, setDeleteReason] = useState('')
+  const [adminIdentifier, setAdminIdentifier] = useState('')
   const [adminPassword, setAdminPassword] = useState('')
   const [deleting, setDeleting] = useState(false)
-  const canDelete = profile?.role === 'admin'
+  const canDelete = Boolean(profile)
 
   async function refresh() {
     await onAfterChange?.()
@@ -40,6 +40,7 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
   function cancelDelete() {
     setPendingDeleteState(null)
     setDeleteReason('')
+    setAdminIdentifier('')
     setAdminPassword('')
     setDeleting(false)
   }
@@ -50,28 +51,15 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
       return
     }
 
-    if (!canDelete) {
-      toast.error('Apenas administradores podem excluir orcamentos.')
+    if (!profile) {
+      toast.error('Entre no sistema para solicitar exclusao.')
       return
     }
 
     setPendingDeleteState(orcamento)
     setDeleteReason('')
+    setAdminIdentifier('')
     setAdminPassword('')
-  }
-
-  async function verifyAdminPassword() {
-    if (!profile) throw new Error('Sessao expirada. Entre novamente.')
-    if (profile.role !== 'admin') throw new Error('Apenas administradores podem excluir orcamentos.')
-    if (!adminPassword.trim()) throw new Error('Informe a senha de admin.')
-
-    if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: profile.email,
-        password: adminPassword,
-      })
-      if (error) throw new Error('Senha de admin invalida.')
-    }
   }
 
   async function confirmDelete() {
@@ -79,8 +67,15 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
 
     setDeleting(true)
     try {
-      await verifyAdminPassword()
-      await deleteOrcamento({ id: pendingDelete.id, motivo: deleteReason }, profile)
+      await deleteOrcamento(
+        {
+          id: pendingDelete.id,
+          motivo: deleteReason,
+          adminIdentifier,
+          adminPassword,
+        },
+        profile,
+      )
       toast.success(`Orcamento ${pendingDelete.numero} marcado como excluido.`)
       cancelDelete()
       await refresh()
@@ -109,11 +104,13 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
   }
 
   return {
+    adminIdentifier,
     adminPassword,
     canDelete,
     deleting,
     deleteReason,
     pendingDelete,
+    setAdminIdentifier,
     setAdminPassword,
     setDeleteReason,
     setPendingDelete,

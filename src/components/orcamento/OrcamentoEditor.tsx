@@ -92,6 +92,8 @@ export function OrcamentoEditor({ existing }: Props) {
     excluidoEm: existing?.excluidoEm ?? null,
     excluidoPor: existing?.excluidoPor ?? null,
     excluidoPorNome: existing?.excluidoPorNome ?? null,
+    exclusaoSolicitadaPor: existing?.exclusaoSolicitadaPor ?? null,
+    exclusaoSolicitadaPorNome: existing?.exclusaoSolicitadaPorNome ?? null,
     excluidoMotivo: existing?.excluidoMotivo ?? null,
     itens: draft.itens.map((item) => ({ ...item, valorTotal: calculateItemTotal(item) })),
   }
