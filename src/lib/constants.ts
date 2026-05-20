@@ -41,6 +41,7 @@ export const STATUS_LABELS: Record<OrcamentoStatus, string> = {
   aprovado: 'Aprovado',
   recusado: 'Recusado',
   cancelado: 'Cancelado',
+  excluido: 'Excluído',
 }
 
 export const STATUS_CLASSES: Record<OrcamentoStatus, string> = {
@@ -49,4 +50,5 @@ export const STATUS_CLASSES: Record<OrcamentoStatus, string> = {
   aprovado: 'status-badge status-approved',
   recusado: 'status-badge status-rejected',
   cancelado: 'status-badge status-canceled',
+  excluido: 'status-badge status-deleted',
 }

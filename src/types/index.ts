@@ -1,4 +1,4 @@
-export const ORCAMENTO_STATUSES = ['rascunho', 'enviado', 'aprovado', 'recusado', 'cancelado'] as const
+export const ORCAMENTO_STATUSES = ['rascunho', 'enviado', 'aprovado', 'recusado', 'cancelado', 'excluido'] as const
 
 export type OrcamentoStatus = (typeof ORCAMENTO_STATUSES)[number]
 
@@ -32,6 +32,12 @@ export type Orcamento = {
   criadoPorNome: string
   criadoEm: string
   atualizadoEm: string
+  excluidoEm?: string | null
+  excluidoPor?: string | null
+  excluidoPorNome?: string | null
+  exclusaoSolicitadaPor?: string | null
+  exclusaoSolicitadaPorNome?: string | null
+  excluidoMotivo?: string | null
   itens: OrcamentoItem[]
 }
 

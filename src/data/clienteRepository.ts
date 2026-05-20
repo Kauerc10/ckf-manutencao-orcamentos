@@ -114,6 +114,19 @@ function appendActivityLocal(log: Omit<ActivityLog, 'id' | 'criadoEm'>): void {
   localStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify([next, ...readActivityLocal()]))
 }
 
+function mapActivityLog(row: SupabaseActivityRow): ActivityLog {
+  return {
+    id: row.id,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    action: row.action,
+    actorId: row.actor_id,
+    actorName: row.profiles?.nome ?? row.profiles?.email ?? null,
+    details: row.details ?? {},
+    criadoEm: row.criado_em,
+  }
+}
+
 function mapRepresentante(row: SupabaseRepresentanteRow): ClienteRepresentante {
   return {
     id: row.id,
@@ -360,26 +373,33 @@ export async function archiveCliente(id: string, profile: Profile): Promise<void
 
 export async function listClienteActivity(clienteId: string): Promise<ActivityLog[]> {
   if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase
-      .from('activity_logs')
-      .select('*, profiles:actor_id(nome,email)')
-      .order('criado_em', { ascending: false })
-      .limit(100)
+    const baseSelect = '*, profiles:actor_id(nome,email)'
+    const [entityResult, detailsResult] = await Promise.all([
+      supabase
+        .from('activity_logs')
+        .select(baseSelect)
+        .eq('entity_id', clienteId)
+        .order('criado_em', { ascending: false })
+        .limit(30),
+      supabase
+        .from('activity_logs')
+        .select(baseSelect)
+        .filter('details->>cliente_id', 'eq', clienteId)
+        .order('criado_em', { ascending: false })
+        .limit(30),
+    ])
 
-    if (error) throw error
-    return ((data ?? []) as unknown as SupabaseActivityRow[])
-      .filter((row) => row.entity_id === clienteId || row.details?.cliente_id === clienteId)
+    if (entityResult.error) throw entityResult.error
+    if (detailsResult.error) throw detailsResult.error
+
+    const byId = new Map<string, ActivityLog>()
+    ;[...((entityResult.data ?? []) as unknown as SupabaseActivityRow[]), ...((detailsResult.data ?? []) as unknown as SupabaseActivityRow[])]
+      .map(mapActivityLog)
+      .forEach((log) => byId.set(log.id, log))
+
+    return [...byId.values()]
+      .sort((a, b) => b.criadoEm.localeCompare(a.criadoEm))
       .slice(0, 30)
-      .map((row) => ({
-        id: row.id,
-        entityType: row.entity_type,
-        entityId: row.entity_id,
-        action: row.action,
-        actorId: row.actor_id,
-        actorName: row.profiles?.nome ?? row.profiles?.email ?? null,
-        details: row.details ?? {},
-        criadoEm: row.criado_em,
-      }))
   }
 
   return readActivityLocal().filter((log) => log.entityId === clienteId || log.details.cliente_id === clienteId)

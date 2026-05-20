@@ -22,6 +22,10 @@ export function exportOrcamentosCsv(orcamentos: Orcamento[]): string {
     'criado_por_nome',
     'criado_em',
     'atualizado_em',
+    'exclusao_solicitada_por_nome',
+    'excluido_por_nome',
+    'excluido_em',
+    'excluido_motivo',
   ]
 
   const rows = orcamentos.map((orcamento) => [
@@ -36,6 +40,10 @@ export function exportOrcamentosCsv(orcamentos: Orcamento[]): string {
     orcamento.criadoPorNome,
     orcamento.criadoEm,
     orcamento.atualizadoEm,
+    orcamento.exclusaoSolicitadaPorNome ?? '',
+    orcamento.excluidoPorNome ?? '',
+    orcamento.excluidoEm ?? '',
+    orcamento.excluidoMotivo ?? '',
   ])
 
   return [header, ...rows].map((row) => row.map(csvEscape).join(';')).join('\n')

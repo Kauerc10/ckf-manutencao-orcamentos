@@ -1,6 +1,6 @@
 import { FileDown, FileSpreadsheet } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DeleteOrcamentoDialog } from '../components/orcamento/DeleteOrcamentoDialog'
 import { OrcamentoFilters } from '../components/orcamento/OrcamentoFilters'
 import { OrcamentoList } from '../components/orcamento/OrcamentoList'
 import { exportOrcamentosCsv } from '../lib/csv'
@@ -63,6 +63,7 @@ export function Historico() {
           <>
             <OrcamentoList
               orcamentos={pageItems}
+              canDelete={actions.canDelete}
               onDelete={actions.setPendingDelete}
               onDuplicate={actions.duplicate}
               onDownloadPdf={actions.downloadPdf}
@@ -99,12 +100,16 @@ export function Historico() {
         ) : null}
       </section>
 
-      <ConfirmDialog
-        open={Boolean(actions.pendingDelete)}
-        title="Excluir orçamento?"
-        description={`O orçamento ${actions.pendingDelete?.numero ?? ''} será removido definitivamente.`}
-        confirmLabel="Excluir"
-        onCancel={() => actions.setPendingDelete(null)}
+      <DeleteOrcamentoDialog
+        orcamento={actions.pendingDelete}
+        motivo={actions.deleteReason}
+        adminIdentifier={actions.adminIdentifier}
+        senha={actions.adminPassword}
+        deleting={actions.deleting}
+        onMotivoChange={actions.setDeleteReason}
+        onAdminIdentifierChange={actions.setAdminIdentifier}
+        onSenhaChange={actions.setAdminPassword}
+        onCancel={actions.cancelDelete}
         onConfirm={actions.confirmDelete}
       />
     </section>

@@ -30,6 +30,11 @@ export function VisualizarOrcamento() {
 
   async function duplicateHere() {
     if (!orcamento || !profile) return
+    if (orcamento.status === 'excluido') {
+      toast.error('Orçamentos excluídos não podem ser duplicados.')
+      return
+    }
+
     const created = await saveOrcamento(createDuplicateDraft(orcamento), profile)
     toast.success(`Orçamento ${created.numero} duplicado.`)
     navigate(`/orcamentos/${created.id}/editar`)
@@ -37,6 +42,8 @@ export function VisualizarOrcamento() {
 
   if (loading) return <div className="skeleton-block">Carregando orçamento...</div>
   if (!orcamento) return <div className="error-state">Orçamento não encontrado.</div>
+
+  const isDeleted = orcamento.status === 'excluido'
 
   return (
     <section className="view-grid">
@@ -48,6 +55,12 @@ export function VisualizarOrcamento() {
           </div>
           <StatusBadge status={orcamento.status} />
         </div>
+
+        {isDeleted ? (
+          <div className="warning-banner">
+            Este orçamento foi marcado como excluído e permanece apenas para rastreabilidade.
+          </div>
+        ) : null}
 
         <dl className="meta-grid">
           {orcamento.clienteId ? (
@@ -87,6 +100,26 @@ export function VisualizarOrcamento() {
             <dt>Atualizado em</dt>
             <dd>{formatDateTimeBR(orcamento.atualizadoEm)}</dd>
           </div>
+          {isDeleted ? (
+            <>
+              <div>
+                <dt>Solicitado por</dt>
+                <dd>{orcamento.exclusaoSolicitadaPorNome ?? '-'}</dd>
+              </div>
+              <div>
+                <dt>Excluído por</dt>
+                <dd>{orcamento.excluidoPorNome ?? 'Admin'}</dd>
+              </div>
+              <div>
+                <dt>Excluído em</dt>
+                <dd>{orcamento.excluidoEm ? formatDateTimeBR(orcamento.excluidoEm) : '-'}</dd>
+              </div>
+              <div>
+                <dt>Motivo</dt>
+                <dd>{orcamento.excluidoMotivo}</dd>
+              </div>
+            </>
+          ) : null}
         </dl>
 
         <div className="button-row wrap">
@@ -98,14 +131,18 @@ export function VisualizarOrcamento() {
             <FileSpreadsheet size={17} />
             Baixar XLSX
           </button>
-          <Link className="secondary-button" to={`/orcamentos/${orcamento.id}/editar`}>
-            <Edit3 size={17} />
-            Editar
-          </Link>
-          <button className="secondary-button" type="button" onClick={duplicateHere}>
-            <Copy size={17} />
-            Duplicar
-          </button>
+          {!isDeleted ? (
+            <Link className="secondary-button" to={`/orcamentos/${orcamento.id}/editar`}>
+              <Edit3 size={17} />
+              Editar
+            </Link>
+          ) : null}
+          {!isDeleted ? (
+            <button className="secondary-button" type="button" onClick={duplicateHere}>
+              <Copy size={17} />
+              Duplicar
+            </button>
+          ) : null}
           <button className="secondary-button" type="button" onClick={() => navigate(-1)}>
             <RotateCcw size={17} />
             Voltar

@@ -99,19 +99,19 @@ export function AppLayout({ children }: Props) {
             </div>
 
             <nav className="drawer-nav" aria-label="Menu mobile">
-              <NavLink to="/" end>
+              <NavLink to="/" end onClick={closeDrawer}>
                 <LayoutDashboard size={18} />
                 Dashboard
               </NavLink>
-              <NavLink to="/orcamentos/novo">
+              <NavLink to="/orcamentos/novo" onClick={closeDrawer}>
                 <Plus size={18} />
                 Novo orçamento
               </NavLink>
-              <NavLink to="/clientes">
+              <NavLink to="/clientes" onClick={closeDrawer}>
                 <Users size={18} />
                 Clientes
               </NavLink>
-              <NavLink to="/historico">
+              <NavLink to="/historico" onClick={closeDrawer}>
                 <FileClock size={18} />
                 Histórico
               </NavLink>
@@ -119,7 +119,7 @@ export function AppLayout({ children }: Props) {
 
             <div className="drawer-footer">
               <nav className="drawer-nav drawer-nav-secondary" aria-label="Sistema mobile">
-                <NavLink to="/configuracoes">
+                <NavLink to="/configuracoes" onClick={closeDrawer}>
                   <Settings size={18} />
                   Configurações
                 </NavLink>

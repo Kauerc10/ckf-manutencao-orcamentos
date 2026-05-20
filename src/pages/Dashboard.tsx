@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DeleteOrcamentoDialog } from '../components/orcamento/DeleteOrcamentoDialog'
 import { OrcamentoFilters } from '../components/orcamento/OrcamentoFilters'
 import { OrcamentoList } from '../components/orcamento/OrcamentoList'
 import { formatCurrency } from '../lib/formatters'
@@ -58,6 +58,7 @@ export function Dashboard() {
           <OrcamentoList
             compact
             orcamentos={filtered.slice(0, 20)}
+            canDelete={actions.canDelete}
             onDelete={actions.setPendingDelete}
             onDuplicate={actions.duplicate}
             onDownloadPdf={actions.downloadPdf}
@@ -66,12 +67,16 @@ export function Dashboard() {
         ) : null}
       </section>
 
-      <ConfirmDialog
-        open={Boolean(actions.pendingDelete)}
-        title="Excluir orçamento?"
-        description={`O orçamento ${actions.pendingDelete?.numero ?? ''} será removido definitivamente.`}
-        confirmLabel="Excluir"
-        onCancel={() => actions.setPendingDelete(null)}
+      <DeleteOrcamentoDialog
+        orcamento={actions.pendingDelete}
+        motivo={actions.deleteReason}
+        adminIdentifier={actions.adminIdentifier}
+        senha={actions.adminPassword}
+        deleting={actions.deleting}
+        onMotivoChange={actions.setDeleteReason}
+        onAdminIdentifierChange={actions.setAdminIdentifier}
+        onSenhaChange={actions.setAdminPassword}
+        onCancel={actions.cancelDelete}
         onConfirm={actions.confirmDelete}
       />
     </section>

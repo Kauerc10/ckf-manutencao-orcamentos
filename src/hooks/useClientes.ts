@@ -26,6 +26,15 @@ export function useClientes(filters: ClienteFilters = DEFAULT_CLIENTE_FILTERS) {
     void load()
   }, [load])
 
+  useEffect(() => {
+    function reloadWhenFocused() {
+      void load()
+    }
+
+    window.addEventListener('focus', reloadWhenFocused)
+    return () => window.removeEventListener('focus', reloadWhenFocused)
+  }, [load])
+
   const filtered = useMemo(() => applyClienteFilters(clientes, filters), [clientes, filters])
 
   const cityOptions = useMemo(() => {

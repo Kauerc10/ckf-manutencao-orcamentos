@@ -13,7 +13,12 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
   const navigate = useNavigate()
   const profile = useAuthStore((state) => state.profile)
   const settings = useSystemSettingsStore((state) => state.settings)
-  const [pendingDelete, setPendingDelete] = useState<Orcamento | null>(null)
+  const [pendingDelete, setPendingDeleteState] = useState<Orcamento | null>(null)
+  const [deleteReason, setDeleteReason] = useState('')
+  const [adminIdentifier, setAdminIdentifier] = useState('')
+  const [adminPassword, setAdminPassword] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const canDelete = Boolean(profile)
 
   async function refresh() {
     await onAfterChange?.()
@@ -21,18 +26,63 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
 
   async function duplicate(orcamento: Orcamento) {
     if (!profile) return
+    if (orcamento.status === 'excluido') {
+      toast.error('Orcamentos excluidos nao podem ser duplicados.')
+      return
+    }
+
     const created = await saveOrcamento(createDuplicateDraft(orcamento), profile)
-    toast.success(`Orçamento ${created.numero} duplicado.`)
+    toast.success(`Orcamento ${created.numero} duplicado.`)
     await refresh()
     navigate(`/orcamentos/${created.id}/editar`)
   }
 
+  function cancelDelete() {
+    setPendingDeleteState(null)
+    setDeleteReason('')
+    setAdminIdentifier('')
+    setAdminPassword('')
+    setDeleting(false)
+  }
+
+  function setPendingDelete(orcamento: Orcamento | null) {
+    if (!orcamento) {
+      cancelDelete()
+      return
+    }
+
+    if (!profile) {
+      toast.error('Entre no sistema para solicitar exclusao.')
+      return
+    }
+
+    setPendingDeleteState(orcamento)
+    setDeleteReason('')
+    setAdminIdentifier('')
+    setAdminPassword('')
+  }
+
   async function confirmDelete() {
-    if (!pendingDelete) return
-    await deleteOrcamento(pendingDelete.id)
-    toast.success(`Orçamento ${pendingDelete.numero} excluído.`)
-    setPendingDelete(null)
-    await refresh()
+    if (!pendingDelete || !profile || deleting) return
+
+    setDeleting(true)
+    try {
+      await deleteOrcamento(
+        {
+          id: pendingDelete.id,
+          motivo: deleteReason,
+          adminIdentifier,
+          adminPassword,
+        },
+        profile,
+      )
+      toast.success(`Orcamento ${pendingDelete.numero} marcado como excluido.`)
+      cancelDelete()
+      await refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Nao foi possivel excluir o orcamento.')
+      setDeleting(false)
+    }
   }
 
   async function downloadPdf(orcamento: Orcamento) {
@@ -54,8 +104,17 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
   }
 
   return {
+    adminIdentifier,
+    adminPassword,
+    canDelete,
+    deleting,
+    deleteReason,
     pendingDelete,
+    setAdminIdentifier,
+    setAdminPassword,
+    setDeleteReason,
     setPendingDelete,
+    cancelDelete,
     duplicate,
     confirmDelete,
     downloadPdf,

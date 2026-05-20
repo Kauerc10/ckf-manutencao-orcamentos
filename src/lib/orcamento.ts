@@ -3,6 +3,20 @@ import type { Orcamento, OrcamentoDraft, OrcamentoItem } from '../types'
 
 export type ItemCalculationInput = Pick<OrcamentoItem, 'quantidade' | 'valorUnitario' | 'valorTotal'>
 
+export type ItemSyncPlanItem = {
+  ordem: number
+  quantidade: number | null
+  descricao: string
+  valorUnitario: number | null
+  valorTotal: number
+}
+
+export type ItemSyncPlan = {
+  updates: Array<ItemSyncPlanItem & { id: string }>
+  inserts: ItemSyncPlanItem[]
+  deleteIds: string[]
+}
+
 export function toMoneyNumber(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
 }
@@ -34,6 +48,37 @@ export function normalizeItems(items: OrcamentoItem[]): OrcamentoItem[] {
       valorTotal: calculateItemTotal(item),
     }))
     .filter((item) => item.descricao || item.quantidade || item.valorUnitario || item.valorTotal)
+}
+
+export function createItemSyncPlan(existingItemIds: string[], items: OrcamentoItem[]): ItemSyncPlan {
+  const existingIds = new Set(existingItemIds)
+  const keptIds = new Set<string>()
+  const updates: ItemSyncPlan['updates'] = []
+  const inserts: ItemSyncPlan['inserts'] = []
+
+  normalizeItems(items).forEach((item, index) => {
+    const plannedItem: ItemSyncPlanItem = {
+      ordem: index + 1,
+      quantidade: item.quantidade,
+      descricao: item.descricao,
+      valorUnitario: item.valorUnitario,
+      valorTotal: item.valorTotal,
+    }
+
+    if (item.id && existingIds.has(item.id)) {
+      keptIds.add(item.id)
+      updates.push({ id: item.id, ...plannedItem })
+      return
+    }
+
+    inserts.push(plannedItem)
+  })
+
+  return {
+    updates,
+    inserts,
+    deleteIds: existingItemIds.filter((id) => !keptIds.has(id)),
+  }
 }
 
 export function normalizeItemsForDocument(items: OrcamentoItem[]): OrcamentoItem[] {

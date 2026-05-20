@@ -7,14 +7,16 @@ import { StatusBadge } from './StatusBadge'
 
 type Props = {
   orcamento: Orcamento
+  canDelete?: boolean
   onDelete: (orcamento: Orcamento) => void
   onDuplicate: (orcamento: Orcamento) => void
   onDownloadPdf: (orcamento: Orcamento) => void
   onDownloadXlsx: (orcamento: Orcamento) => void
 }
 
-export function OrcamentoCard({ orcamento, onDelete, onDuplicate, onDownloadPdf, onDownloadXlsx }: Props) {
+export function OrcamentoCard({ orcamento, canDelete = false, onDelete, onDuplicate, onDownloadPdf, onDownloadXlsx }: Props) {
   const [expanded, setExpanded] = useState(false)
+  const isDeleted = orcamento.status === 'excluido'
 
   return (
     <article className="orcamento-card">
@@ -35,6 +37,11 @@ export function OrcamentoCard({ orcamento, onDelete, onDuplicate, onDownloadPdf,
           {orcamento.clienteNome ? <span>{orcamento.clienteNome}</span> : null}
           <span className="card-total">{formatCurrency(orcamento.total)}</span>
         </div>
+        {isDeleted ? (
+          <small className="deleted-audit-line">
+            Excluído por {orcamento.excluidoPorNome ?? 'admin'}: {orcamento.excluidoMotivo}
+          </small>
+        ) : null}
       </div>
 
       {expanded ? (
@@ -43,14 +50,18 @@ export function OrcamentoCard({ orcamento, onDelete, onDuplicate, onDownloadPdf,
             <Eye size={16} />
             Ver
           </Link>
-          <Link className="card-action-btn" to={`/orcamentos/${orcamento.id}/editar`}>
-            <Edit3 size={16} />
-            Editar
-          </Link>
-          <button className="card-action-btn" type="button" onClick={() => onDuplicate(orcamento)}>
-            <Copy size={16} />
-            Duplicar
-          </button>
+          {!isDeleted ? (
+            <Link className="card-action-btn" to={`/orcamentos/${orcamento.id}/editar`}>
+              <Edit3 size={16} />
+              Editar
+            </Link>
+          ) : null}
+          {!isDeleted ? (
+            <button className="card-action-btn" type="button" onClick={() => onDuplicate(orcamento)}>
+              <Copy size={16} />
+              Duplicar
+            </button>
+          ) : null}
           <button className="card-action-btn" type="button" onClick={() => onDownloadPdf(orcamento)}>
             <Download size={16} />
             PDF
@@ -59,10 +70,12 @@ export function OrcamentoCard({ orcamento, onDelete, onDuplicate, onDownloadPdf,
             <FileSpreadsheet size={16} />
             XLSX
           </button>
-          <button className="card-action-btn card-action-danger" type="button" onClick={() => onDelete(orcamento)}>
-            <Trash2 size={16} />
-            Excluir
-          </button>
+          {canDelete && !isDeleted ? (
+            <button className="card-action-btn card-action-danger" type="button" onClick={() => onDelete(orcamento)}>
+              <Trash2 size={16} />
+              Excluir
+            </button>
+          ) : null}
         </div>
       ) : null}
     </article>

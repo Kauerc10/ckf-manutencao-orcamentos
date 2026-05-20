@@ -210,6 +210,10 @@ export type Database = {
           atualizado_por: string | null
           criado_em: string
           atualizado_em: string
+          excluido_em: string | null
+          excluido_por: string | null
+          exclusao_solicitada_por: string | null
+          excluido_motivo: string | null
         }
         Insert: {
           data_orcamento: string
@@ -220,8 +224,11 @@ export type Database = {
           observacoes?: string
           validade_dias?: number
           total: number
-          criado_por: string
           atualizado_por?: string | null
+          excluido_em?: string | null
+          excluido_por?: string | null
+          exclusao_solicitada_por?: string | null
+          excluido_motivo?: string | null
         }
         Update: {
           data_orcamento?: string
@@ -233,6 +240,10 @@ export type Database = {
           validade_dias?: number
           total?: number
           atualizado_por?: string | null
+          excluido_em?: string | null
+          excluido_por?: string | null
+          exclusao_solicitada_por?: string | null
+          excluido_motivo?: string | null
         }
       }
       orcamento_itens: {

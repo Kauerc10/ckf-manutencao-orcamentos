@@ -32,6 +32,8 @@ build/
 supabase/.branches/
 supabase/.temp/
 supabase/.env
+test-supabase*.js
+test-supabase*.mjs
 
 # Editor directories and files
 .vscode/*
