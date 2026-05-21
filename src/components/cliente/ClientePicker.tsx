@@ -258,12 +258,38 @@ export function ClientePicker({
                 </button>
               ) : null}
             </div>
-            {isChanging ? (
+
+            <div className="cliente-picker-actions">
+              <Link
+                className="cliente-icon-button"
+                to="/clientes/novo"
+                target="_blank"
+                title="Cadastrar novo cliente"
+                aria-label="Cadastrar novo cliente"
+              >
+                <Plus size={16} />
+              </Link>
+              <button
+                className="cliente-icon-button"
+                type="button"
+                onClick={() => void handleRefresh()}
+                disabled={!onRefresh || refreshing}
+                title={refreshing ? 'Atualizando clientes' : 'Atualizar clientes'}
+                aria-label={refreshing ? 'Atualizando clientes' : 'Atualizar clientes'}
+                aria-busy={refreshing}
+              >
+                <RefreshCw size={16} className={refreshing ? 'cliente-refreshing' : undefined} />
+              </button>
+            </div>
+          </div>
+
+          {isChanging ? (
+            <div className="cliente-change-toolbar">
               <button className="secondary-button cliente-change-cancel" type="button" onClick={handleCancelChanging}>
                 Cancelar troca
               </button>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
           {!trimmedQuery ? (
             <p className="cliente-search-hint">Digite para buscar clientes cadastrados.</p>
@@ -347,24 +373,6 @@ export function ClientePicker({
               )}
             </div>
           ) : null}
-
-          <div className="quick-client-link-panel">
-            <div className="button-row wrap">
-              <Link className="secondary-button text-sm" to="/clientes/novo" target="_blank">
-                <Plus size={14} />
-                Cadastrar novo cliente
-              </Link>
-              <button
-                className="secondary-button text-sm"
-                type="button"
-                onClick={() => void handleRefresh()}
-                disabled={!onRefresh || refreshing}
-              >
-                <RefreshCw size={14} className={refreshing ? 'cliente-refreshing' : undefined} />
-                {refreshing ? 'Atualizando...' : 'Atualizar clientes'}
-              </button>
-            </div>
-          </div>
         </div>
       ) : null}
     </div>

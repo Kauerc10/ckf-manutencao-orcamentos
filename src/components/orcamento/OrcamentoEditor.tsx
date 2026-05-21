@@ -225,7 +225,17 @@ export function OrcamentoEditor({ existing }: Props) {
               <h2>{existing ? `Editar orçamento ${formatOrcamentoNumero(existing.numero, existing.revisao)}` : 'Novo orçamento'}</h2>
               <p>{existing ? 'O número permanece fixo.' : 'O número oficial será gerado ao salvar.'}</p>
             </div>
-            <strong className="number-pill">{existing ? formatOrcamentoNumero(existing.numero, existing.revisao) : 'Gerado ao salvar'}</strong>
+            <div className="editor-heading-actions">
+              <strong className="number-pill">{existing ? formatOrcamentoNumero(existing.numero, existing.revisao) : 'Gerado ao salvar'}</strong>
+              <button
+                className="secondary-button mobile-only mobile-preview-inline"
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+              >
+                <Eye size={16} />
+                Preview
+              </button>
+            </div>
           </div>
 
           {existing && ['aprovado', 'recusado', 'cancelado'].includes(existing.status) ? (
