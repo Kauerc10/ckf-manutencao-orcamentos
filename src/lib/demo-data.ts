@@ -89,6 +89,8 @@ export const DEMO_ORCAMENTOS: Orcamento[] = [
   {
     id: 'demo-1',
     numero: 285,
+    revisao: 0,
+    parentId: null,
     dataOrcamento: '2026-05-16',
     servicoCliente: 'Filial São José',
     clienteId: 'cliente-demo-1',
@@ -117,6 +119,8 @@ export const DEMO_ORCAMENTOS: Orcamento[] = [
   {
     id: 'demo-2',
     numero: 286,
+    revisao: 0,
+    parentId: null,
     dataOrcamento: '2026-05-14',
     servicoCliente: 'Manutenção preventiva - Blumenau',
     clienteId: 'cliente-demo-2',

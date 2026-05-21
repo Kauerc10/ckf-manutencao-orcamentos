@@ -1,5 +1,5 @@
 import { ArrowLeft, Building2, IdCard, MapPin, Plus, Save, ShieldCheck, Trash2, UserRound } from 'lucide-react'
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getCliente, saveCliente } from '../data/clienteRepository'
@@ -16,6 +16,7 @@ import {
 } from '../lib/clientes'
 import { clienteFormSchema } from '../lib/validations'
 import { useAuthStore } from '../stores/authStore'
+import { useClientes } from '../hooks/useClientes'
 import type { Cliente, ClienteDraft, ClienteRepresentante, ClienteTipo } from '../types'
 
 function emptyRepresentante(principal = false): ClienteRepresentante {
@@ -106,6 +107,48 @@ export function ClienteFormPage() {
   const [loading, setLoading] = useState(Boolean(id))
   const [saving, setSaving] = useState(false)
   const [showAddressWarning, setShowAddressWarning] = useState(false)
+  const [loadingCep, setLoadingCep] = useState(false)
+  const [loadingCnpj, setLoadingCnpj] = useState(false)
+  const { clientes } = useClientes()
+  const [isTagsFocused, setIsTagsFocused] = useState(false)
+  const [focusedTagIndex, setFocusedTagIndex] = useState(-1)
+  const tagsContainerRef = useRef<HTMLDivElement>(null)
+  const tagsInputRef = useRef<HTMLInputElement>(null)
+
+  const allTags = useMemo(() => {
+    if (!clientes) return []
+    const set = new Set<string>()
+    clientes.forEach((c) => {
+      if (Array.isArray(c.tags)) {
+        c.tags.forEach((t) => {
+          if (t && typeof t === 'string') set.add(t.trim())
+        })
+      }
+    })
+    return [...set].sort()
+  }, [clientes])
+
+  const tagSuggestions = useMemo(() => {
+    const query = tagsInput.trim().toLowerCase()
+    const currentTags = draft.tags || []
+    return allTags.filter((tag) => {
+      const matchQuery = tag.toLowerCase().includes(query)
+      const isAlreadyAdded = currentTags.some((t) => t.toLowerCase() === tag.toLowerCase())
+      return matchQuery && !isAlreadyAdded
+    })
+  }, [allTags, tagsInput, draft.tags])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tagsContainerRef.current && !tagsContainerRef.current.contains(event.target as Node)) {
+        setIsTagsFocused(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -113,7 +156,7 @@ export function ClienteFormPage() {
       if (cliente) {
         const next = draftFromCliente(cliente)
         setDraft(next)
-        setTagsInput(formatTags(next.tags))
+        setTagsInput('')
       }
       setLoading(false)
     })
@@ -125,6 +168,131 @@ export function ClienteFormPage() {
 
   function updateField<K extends DraftField>(field: K, value: ClienteDraft[K]) {
     updateDraft({ [field]: value } as Pick<ClienteDraft, K>)
+  }
+
+  async function handleSearchCep(cleanCep: string) {
+    if (cleanCep.length !== 8) return
+    setLoadingCep(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`)
+      if (!res.ok) throw new Error('Falha ao buscar CEP')
+      const data = await res.json()
+      if (data.erro) {
+        toast.error('CEP não encontrado.')
+        return
+      }
+      setDraft((current) => ({
+        ...current,
+        logradouro: data.logradouro || current.logradouro,
+        bairro: data.bairro || current.bairro,
+        cidade: data.localidade || current.cidade,
+        uf: (data.uf || current.uf).toUpperCase(),
+      }))
+      toast.success('Endereço preenchido via CEP!')
+    } catch (err) {
+      console.error(err)
+      toast.error('Erro ao buscar o CEP. Digite o endereço manualmente.')
+    } finally {
+      setLoadingCep(false)
+    }
+  }
+
+  async function handleSearchCnpj() {
+    const cleanCnpj = draft.documento.replace(/\D/g, '')
+    if (cleanCnpj.length !== 14) {
+      toast.error('CNPJ inválido.')
+      return
+    }
+    setLoadingCnpj(true)
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`)
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('CNPJ não encontrado.')
+        }
+        throw new Error('Falha ao consultar CNPJ.')
+      }
+      const data = await res.json()
+      
+      setDraft((current) => {
+        let telefoneFormatted = current.telefonePrincipal
+        const rawPhone = data.ddd_telefone_1 || data.telefone
+        if (rawPhone) {
+          telefoneFormatted = formatPhone(rawPhone)
+        }
+        let cepFormatted = current.cep
+        if (data.cep) {
+          cepFormatted = formatCep(data.cep)
+        }
+        return {
+          ...current,
+          nome: data.razao_social || current.nome,
+          nomeFantasia: data.nome_fantasia || current.nomeFantasia || data.razao_social || '',
+          email: data.email || current.email,
+          telefonePrincipal: telefoneFormatted,
+          cep: cepFormatted,
+          logradouro: data.logradouro || current.logradouro,
+          numero: data.numero || current.numero,
+          bairro: data.bairro || current.bairro,
+          cidade: data.municipio || current.cidade,
+          uf: (data.uf || current.uf).toUpperCase(),
+        }
+      })
+      toast.success('Dados da empresa preenchidos com sucesso!')
+    } catch (err) {
+      console.error(err)
+      toast.error(err instanceof Error ? err.message : 'Erro ao consultar CNPJ.')
+    } finally {
+      setLoadingCnpj(false)
+    }
+  }
+
+  const addTag = (tag: string) => {
+    const cleanTag = tag.trim().replace(/,/g, '')
+    if (!cleanTag) return
+    const currentTags = draft.tags || []
+    if (!currentTags.some((t) => t.toLowerCase() === cleanTag.toLowerCase())) {
+      updateField('tags', [...currentTags, cleanTag])
+    }
+    setTagsInput('')
+    setFocusedTagIndex(-1)
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    const currentTags = draft.tags || []
+    updateField('tags', currentTags.filter((t) => t !== tagToRemove))
+  }
+
+  const handleTagInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    const currentTags = draft.tags || []
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault()
+      if (focusedTagIndex >= 0 && focusedTagIndex < tagSuggestions.length) {
+        const selected = tagSuggestions[focusedTagIndex]
+        addTag(selected)
+      } else if (tagsInput.trim()) {
+        addTag(tagsInput.trim())
+      }
+    } else if (event.key === 'Backspace' && !tagsInput) {
+      if (currentTags.length > 0) {
+        const nextTags = [...currentTags]
+        nextTags.pop()
+        updateField('tags', nextTags)
+      }
+    } else if (event.key === 'ArrowDown') {
+      if (tagSuggestions.length > 0) {
+        event.preventDefault()
+        setFocusedTagIndex((prev) => (prev < tagSuggestions.length - 1 ? prev + 1 : prev))
+      }
+    } else if (event.key === 'ArrowUp') {
+      if (tagSuggestions.length > 0) {
+        event.preventDefault()
+        setFocusedTagIndex((prev) => (prev > 0 ? prev - 1 : -1))
+      }
+    } else if (event.key === 'Escape') {
+      setIsTagsFocused(false)
+      tagsInputRef.current?.blur()
+    }
   }
 
   function updateMaskedField(field: DraftField, value: string) {
@@ -144,7 +312,12 @@ export function ClienteFormPage() {
     }
 
     if (field === 'cep') {
-      updateField('cep', formatCep(value))
+      const formatted = formatCep(value)
+      updateField('cep', formatted)
+      const clean = formatted.replace(/\D/g, '')
+      if (clean.length === 8) {
+        void handleSearchCep(clean)
+      }
       return
     }
 
@@ -209,7 +382,7 @@ export function ClienteFormPage() {
 
     const payload = {
       ...draft,
-      tags: parseTags(tagsInput),
+      tags: draft.tags,
       representantes: draft.tipo === 'cnpj' ? normalizeClienteRepresentantesForSave(draft.representantes) : [],
     }
     const result = clienteFormSchema.safeParse(payload)
@@ -307,15 +480,29 @@ export function ClienteFormPage() {
               />
             </label>
 
-            <label>
-              {labelCaption(draft.tipo === 'cnpj' ? 'CNPJ' : 'CPF')}
-              <input
-                inputMode="numeric"
-                autoComplete="off"
-                value={draft.documento}
-                onChange={(event) => updateMaskedField('documento', event.target.value)}
-              />
-            </label>
+            <div className="cnpj-input-container">
+              <label className="cnpj-label">
+                {labelCaption(draft.tipo === 'cnpj' ? 'CNPJ' : 'CPF')}
+                <div className="cnpj-input-wrapper">
+                  <input
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={draft.documento}
+                    onChange={(event) => updateMaskedField('documento', event.target.value)}
+                  />
+                  {draft.tipo === 'cnpj' && (
+                    <button
+                      type="button"
+                      className="secondary-button compact-btn"
+                      onClick={handleSearchCnpj}
+                      disabled={loadingCnpj || draft.documento.replace(/\D/g, '').length !== 14}
+                    >
+                      {loadingCnpj ? 'Buscando...' : 'Consultar CNPJ'}
+                    </button>
+                  )}
+                </div>
+              </label>
+            </div>
 
             {draft.tipo === 'cpf' ? (
               <label>
@@ -394,8 +581,11 @@ export function ClienteFormPage() {
 
           <div className="client-section-grid">
             <label>
-              {labelCaption('CEP', false)}
-              <input inputMode="numeric" autoComplete="postal-code" value={draft.cep} onChange={(event) => updateMaskedField('cep', event.target.value)} />
+              <span className="field-label-row">
+                <span>CEP</span>
+                {loadingCep ? <span style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: 'bold' }}>Buscando...</span> : null}
+              </span>
+              <input inputMode="numeric" autoComplete="postal-code" value={draft.cep} onChange={(event) => updateMaskedField('cep', event.target.value)} disabled={loadingCep} />
             </label>
             <label className="span-2">
               {labelCaption('Logradouro', false)}
@@ -519,10 +709,70 @@ export function ClienteFormPage() {
           </div>
 
           <div className="client-section-grid">
-            <label className="span-2">
+            <div className="span-2" ref={tagsContainerRef} style={{ position: 'relative' }}>
               {labelCaption('Tags', false)}
-              <input value={tagsInput} onChange={(event) => setTagsInput(event.target.value)} placeholder="condominio, recorrente, residencial" />
-            </label>
+              <div
+                className={`tags-input-container ${isTagsFocused ? 'focused' : ''}`}
+                onClick={() => tagsInputRef.current?.focus()}
+              >
+                {(draft.tags || []).map((tag) => (
+                  <span key={tag} className="tag-chip">
+                    {tag}
+                    <button
+                      type="button"
+                      className="tag-chip-delete"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeTag(tag)
+                      }}
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+                <input
+                  ref={tagsInputRef}
+                  type="text"
+                  className="tags-input-field"
+                  value={tagsInput}
+                  onChange={(e) => {
+                    setTagsInput(e.target.value)
+                    setFocusedTagIndex(-1)
+                  }}
+                  onFocus={() => setIsTagsFocused(true)}
+                  onKeyDown={handleTagInputKeyDown}
+                  placeholder={draft.tags?.length ? '' : 'condominio, recorrente, residencial'}
+                />
+              </div>
+              {isTagsFocused && (tagsInput.trim() !== '' || tagSuggestions.length > 0) && (
+                <ul className="tags-autocomplete-dropdown">
+                  {tagSuggestions.map((suggestion, index) => (
+                    <li
+                      key={suggestion}
+                      className={`tags-autocomplete-option ${index === focusedTagIndex ? 'highlighted' : ''}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        addTag(suggestion)
+                      }}
+                      onMouseEnter={() => setFocusedTagIndex(index)}
+                    >
+                      {suggestion}
+                    </li>
+                  ))}
+                  {tagSuggestions.length === 0 && tagsInput.trim() !== '' && (
+                    <li
+                      className="tags-autocomplete-option highlighted"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        addTag(tagsInput)
+                      }}
+                    >
+                      Criar tag &ldquo;{tagsInput.trim()}&rdquo;
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
             <label className="span-2">
               {labelCaption('Observacoes', false)}
               <textarea rows={4} value={draft.observacoes} onChange={(event) => updateField('observacoes', event.target.value)} />

@@ -1055,6 +1055,22 @@ textarea:focus {
   gap: 7px;
 }
 
+.cnpj-input-wrapper {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.cnpj-input-wrapper input {
+  flex: 1;
+}
+
+.cnpj-input-wrapper button.compact-btn {
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
 .client-section-toolbar {
   margin-top: 0;
   gap: 12px;
@@ -1707,6 +1723,169 @@ textarea:focus {
 .representante-picker {
   display: grid;
   gap: 6px;
+}
+
+/* ── Tags Autocomplete Component ── */
+.tags-field-wrapper {
+  display: grid;
+  gap: 6px;
+}
+
+.tags-field-wrapper span.field-label-row {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.tags-input-container-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.tags-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 5px 8px;
+  background: #ffffff;
+  border: 1.5px solid #6b7280;
+  border-radius: 6px;
+  cursor: text;
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tags-input-container:hover {
+  border-color: #374151;
+}
+
+.tags-input-container.focused {
+  border-color: var(--accent);
+  box-shadow: 
+    0 0 0 1px var(--accent), 
+    0 0 0 4px rgba(245, 164, 0, 0.15), 
+    0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eef1f5;
+  color: var(--ink);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  user-select: none;
+}
+
+.tag-chip-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.tag-chip-delete:hover {
+  color: var(--danger);
+  background-color: rgba(180, 35, 24, 0.08);
+}
+
+.tags-input-field {
+  flex: 1 1 80px;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  min-height: 26px !important;
+  height: 26px !important;
+  padding: 0 4px !important;
+  color: var(--ink);
+}
+
+.tags-autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  margin-top: 4px;
+  background: #ffffff;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  max-height: 200px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tags-autocomplete-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tags-autocomplete-option.highlighted {
+  background: var(--accent);
+  color: #15110a;
+}
+
+.tags-autocomplete-no-results {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ────────────────────────────────────────────────────────
+   REVISAO (VERSIONAMENTO DE ORCAMENTOS)
+   ──────────────────────────────────────────────────────── */
+
+.revision-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #f5a400 0%, #f59e0b 100%);
+  color: #15110a;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+.info-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1d4ed8;
+  font-weight: 500;
 }
 
 /* ────────────────────────────────────────────────────────

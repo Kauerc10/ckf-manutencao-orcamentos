@@ -232,10 +232,10 @@ export function OrcamentoEditor({ existing }: Props) {
         <form className="panel editor-form" onSubmit={(event) => event.preventDefault()}>
           <div className="panel-heading">
             <div>
-              <h2>{existing ? `Editar orçamento ${formatOrcamentoNumero(existing.numero)}` : 'Novo orçamento'}</h2>
+              <h2>{existing ? `Editar orçamento ${formatOrcamentoNumero(existing.numero, existing.revisao)}` : 'Novo orçamento'}</h2>
               <p>{existing ? 'O número permanece fixo.' : 'O número oficial será gerado ao salvar.'}</p>
             </div>
-            <strong className="number-pill">{existing ? formatOrcamentoNumero(existing.numero) : 'Gerado ao salvar'}</strong>
+            <strong className="number-pill">{existing ? formatOrcamentoNumero(existing.numero, existing.revisao) : 'Gerado ao salvar'}</strong>
           </div>
 
           {existing && ['aprovado', 'recusado', 'cancelado'].includes(existing.status) ? (
