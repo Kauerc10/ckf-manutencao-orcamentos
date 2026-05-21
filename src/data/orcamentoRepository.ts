@@ -8,6 +8,9 @@ const STORAGE_KEY = 'ckf-orcamentos-v1'
 
 type SaveInput = OrcamentoDraft & {
   id?: string
+  numero?: number
+  revisao?: number
+  parentId?: string | null
 }
 
 type DeleteInput = {
@@ -20,6 +23,8 @@ type DeleteInput = {
 type SupabaseOrcamentoRow = {
   id: string
   numero: number
+  revisao?: number | null
+  parent_id?: string | null
   data_orcamento: string
   servico_cliente: string
   cliente_id: string | null
@@ -77,6 +82,8 @@ function mapSupabaseOrcamento(row: SupabaseOrcamentoRow): Orcamento {
   return {
     id: row.id,
     numero: row.numero,
+    revisao: row.revisao ?? 0,
+    parentId: row.parent_id ?? null,
     dataOrcamento: row.data_orcamento,
     servicoCliente: row.servico_cliente,
     clienteId: row.cliente_id,
@@ -166,7 +173,7 @@ function normalizeDeletionReason(motivo: string): string {
 function assertDeleteInput(input: DeleteInput): string {
   const motivo = normalizeDeletionReason(input.motivo)
   if (!motivo) {
-    throw new Error('Informe o motivo da exclusao.')
+    throw new Error('Informe o motivo da exclusão.')
   }
 
   if (!input.adminIdentifier.trim() || !input.adminPassword.trim()) {
@@ -191,7 +198,7 @@ function identifierMatchesProfile(identifier: string, profile: Profile): boolean
 
 function approveLocalDeletion(input: DeleteInput): Profile {
   if (!identifierMatchesProfile(input.adminIdentifier, DEMO_PROFILE) || input.adminPassword !== 'demo-local') {
-    throw new Error('Credenciais de administrador invalidas.')
+    throw new Error('Credenciais de administrador inválidas.')
   }
 
   return DEMO_PROFILE
@@ -209,12 +216,12 @@ async function readFunctionErrorMessage(error: unknown): Promise<string> {
     }
   }
 
-  return error instanceof Error ? error.message : 'Nao foi possivel excluir o orcamento.'
+  return error instanceof Error ? error.message : 'Não foi possível excluir o orçamento.'
 }
 
 function assertEditable(orcamento: Orcamento): void {
   if (orcamento.status === 'excluido') {
-    throw new Error('Orcamentos excluidos nao podem ser editados.')
+    throw new Error('Orçamentos excluídos não podem ser editados.')
   }
 }
 
@@ -363,7 +370,9 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
 
   const created: Orcamento = {
     id: crypto.randomUUID(),
-    numero: nextLocalNumero(all),
+    numero: input.numero ?? nextLocalNumero(all),
+    revisao: input.revisao ?? 0,
+    parentId: input.parentId ?? null,
     dataOrcamento: input.dataOrcamento,
     servicoCliente: input.servicoCliente,
     clienteId: input.clienteId ?? null,
@@ -439,4 +448,88 @@ export async function deleteOrcamento(input: DeleteInput, profile: Profile): Pro
 
   writeLocal(all.map((orcamento) => (orcamento.id === input.id ? deleted : orcamento)))
   return deleted
+}
+
+export async function cloneOrcamentoAsRevision(originalId: string, profile: Profile): Promise<Orcamento> {
+  const original = await getOrcamento(originalId)
+  if (!original) throw new Error('Orcamento nao encontrado.')
+
+  // Find current max revisao for this budget number to auto-increment
+  const all = isSupabaseConfigured && supabase ? await listOrcamentos() : readLocal()
+  const siblings = all.filter((o) => o.numero === original.numero)
+  const nextRevisao = Math.max(0, ...siblings.map((o) => o.revisao ?? 0)) + 1
+
+  const clonedItens = original.itens.map((item) => ({
+    ...item,
+    id: undefined, // will generate new IDs
+  }))
+
+  const input: SaveInput = {
+    numero: original.numero,
+    revisao: nextRevisao,
+    parentId: original.id,
+    dataOrcamento: original.dataOrcamento,
+    servicoCliente: original.servicoCliente,
+    clienteId: original.clienteId ?? null,
+    clienteNome: original.clienteNome ?? null,
+    clienteDocumento: original.clienteDocumento ?? null,
+    representanteId: original.representanteId ?? null,
+    representanteNome: original.representanteNome ?? null,
+    status: 'rascunho',
+    observacoes: original.observacoes,
+    validadeDias: original.validadeDias,
+    total: original.total,
+    itens: clonedItens,
+    excluidoEm: null,
+    excluidoPor: null,
+    excluidoPorNome: null,
+    exclusaoSolicitadaPor: null,
+    exclusaoSolicitadaPorNome: null,
+    excluidoMotivo: null,
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('orcamentos')
+      .insert({
+        numero: input.numero,
+        revisao: input.revisao,
+        parent_id: input.parentId,
+        data_orcamento: input.dataOrcamento,
+        servico_cliente: input.servicoCliente,
+        cliente_id: input.clienteId || null,
+        representante_id: input.representanteId || null,
+        status: input.status,
+        observacoes: input.observacoes,
+        validade_dias: input.validadeDias,
+        total: input.total,
+        criado_por: profile.id,
+      })
+      .select('id')
+      .single()
+
+    if (error) throw error
+
+    const itens = toPersistableItems(clonedItens)
+    if (itens.length > 0) {
+      const { error: insertItemsError } = await supabase.from('orcamento_itens').insert(
+        itens.map((item, index) => ({
+          orcamento_id: data.id,
+          ordem: index + 1,
+          quantidade: item.quantidade,
+          descricao: item.descricao,
+          valor_unitario: item.valorUnitario,
+          valor_total: item.valorTotal,
+        }))
+      )
+      if (insertItemsError) throw insertItemsError
+    }
+
+    const created = await getOrcamento(data.id)
+    if (!created) throw new Error('Revisao criada nao encontrada.')
+    return created
+  }
+
+  // Local storage path
+  return saveOrcamento(input, profile)
 }

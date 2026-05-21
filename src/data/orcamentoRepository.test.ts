@@ -62,7 +62,7 @@ describe('orcamento repository deletion audit', () => {
         { id: 'demo-1', motivo: 'Duplicado.', adminIdentifier: DEMO_PROFILE.email, adminPassword: 'senha-errada' },
         DEMO_PROFILE,
       ),
-    ).rejects.toThrow('Credenciais de administrador invalidas.')
+    ).rejects.toThrow('Credenciais de administrador inválidas.')
 
     await expect(
       deleteOrcamento(
@@ -70,7 +70,7 @@ describe('orcamento repository deletion audit', () => {
         DEMO_PROFILE,
       ),
     ).rejects.toThrow(
-      'Informe o motivo da exclusao.',
+      'Informe o motivo da exclusão.',
     )
   })
 
@@ -86,7 +86,30 @@ describe('orcamento repository deletion audit', () => {
     )
 
     await expect(saveOrcamento({ ...validDraft, id: 'demo-1' }, DEMO_PROFILE)).rejects.toThrow(
-      'Orcamentos excluidos nao podem ser editados.',
+      'Orçamentos excluídos não podem ser editados.',
     )
+  })
+
+  it('clones a quotation as a new revision and increments the revision number', async () => {
+    const { cloneOrcamentoAsRevision } = await import('./orcamentoRepository')
+    
+    // original 'demo-1' has numero: 285, revisao: 0 (default)
+    const cloned1 = await cloneOrcamentoAsRevision('demo-1', DEMO_PROFILE)
+    
+    expect(cloned1).toBeDefined()
+    expect(cloned1.numero).toBe(285)
+    expect(cloned1.revisao).toBe(1)
+    expect(cloned1.parentId).toBe('demo-1')
+    expect(cloned1.status).toBe('rascunho')
+    expect(cloned1.servicoCliente).toBe('Filial São José')
+    expect(cloned1.total).toBe(500)
+    expect(cloned1.itens).toHaveLength(1)
+
+    // Now clone the revision to get revision 2
+    const cloned2 = await cloneOrcamentoAsRevision(cloned1.id, DEMO_PROFILE)
+    expect(cloned2.numero).toBe(285)
+    expect(cloned2.revisao).toBe(2)
+    expect(cloned2.parentId).toBe(cloned1.id)
+    expect(cloned2.status).toBe('rascunho')
   })
 })

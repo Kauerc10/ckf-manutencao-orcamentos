@@ -51,7 +51,12 @@ export function OrcamentoTable({
             const isDeleted = orcamento.status === 'excluido'
             return (
               <tr key={orcamento.id} className={isDeleted ? 'row-deleted' : undefined}>
-                <td>{formatOrcamentoNumero(orcamento.numero)}</td>
+                <td>
+                  <span style={{ fontWeight: 600 }}>{formatOrcamentoNumero(orcamento.numero, orcamento.revisao)}</span>
+                  {(orcamento.revisao ?? 0) > 0 && (
+                    <span className="revision-badge" style={{ marginLeft: 4 }}>R{orcamento.revisao}</span>
+                  )}
+                </td>
                 <td>{formatDateBR(orcamento.dataOrcamento)}</td>
                 <td className="strong-cell">
                   <span className="cell-stack">

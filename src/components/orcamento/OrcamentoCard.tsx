@@ -22,7 +22,12 @@ export function OrcamentoCard({ orcamento, canDelete = false, onDelete, onDuplic
     <article className="orcamento-card">
       <button className="card-header" type="button" onClick={() => setExpanded(!expanded)} aria-expanded={expanded}>
         <div className="card-header-left">
-          <span className="card-number">#{formatOrcamentoNumero(orcamento.numero)}</span>
+          <span className="card-number">
+            <span style={{ fontWeight: 600 }}>{formatOrcamentoNumero(orcamento.numero, orcamento.revisao)}</span>
+            {(orcamento.revisao ?? 0) > 0 && (
+              <span className="revision-badge" style={{ marginLeft: 4 }}>R{orcamento.revisao}</span>
+            )}
+          </span>
           <span className="card-date">{formatDateBR(orcamento.dataOrcamento)}</span>
         </div>
         <div className="card-header-right">

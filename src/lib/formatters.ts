@@ -60,10 +60,11 @@ export function sanitizeFilePart(value: string): string {
   return normalized || 'Cliente'
 }
 
-export function formatOrcamentoNumero(numero: number | string): string {
-  return numero.toString().padStart(3, '0')
+export function formatOrcamentoNumero(numero: number | string, revisao: number = 0): string {
+  const numPart = numero.toString().padStart(3, '0')
+  return revisao > 0 ? `${numPart}-R${revisao}` : numPart;
 }
 
-export function toOrcamentoFilename(numero: number | string, servicoCliente: string, extension: 'pdf' | 'xlsx'): string {
-  return `Orcamento_${formatOrcamentoNumero(numero)}_${sanitizeFilePart(servicoCliente)}.${extension}`
+export function toOrcamentoFilename(numero: number | string, servicoCliente: string, extension: 'pdf' | 'xlsx', revisao: number = 0): string {
+  return `Orcamento_${formatOrcamentoNumero(numero, revisao)}_${sanitizeFilePart(servicoCliente)}.${extension}`
 }

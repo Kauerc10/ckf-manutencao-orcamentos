@@ -17,6 +17,8 @@ export type OrcamentoItem = {
 export type Orcamento = {
   id: string
   numero: number
+  revisao: number
+  parentId?: string | null
   dataOrcamento: string
   servicoCliente: string
   clienteId?: string | null

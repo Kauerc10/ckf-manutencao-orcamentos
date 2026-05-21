@@ -34,6 +34,8 @@ function fromInputNumber(value: string): number | null {
 function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VALIDADE_DIAS, observacoesPadrao = ''): OrcamentoDraft {
   if (existing) {
     return {
+      revisao: existing.revisao,
+      parentId: existing.parentId ?? null,
       dataOrcamento: existing.dataOrcamento,
       servicoCliente: existing.servicoCliente,
       clienteId: existing.clienteId ?? null,
@@ -50,6 +52,8 @@ function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VA
   }
 
   return {
+    revisao: 0,
+    parentId: null,
     dataOrcamento: todayIso(),
     servicoCliente: '',
     clienteId: null,
@@ -94,6 +98,8 @@ export function OrcamentoEditor({ existing }: Props) {
   const preview: Orcamento = {
     id: existing?.id ?? 'preview',
     numero: existing?.numero ?? 0,
+    revisao: draft.revisao,
+    parentId: draft.parentId ?? null,
     dataOrcamento: draft.dataOrcamento,
     servicoCliente: draft.servicoCliente,
     clienteId: draft.clienteId,
@@ -203,7 +209,7 @@ export function OrcamentoEditor({ existing }: Props) {
   async function handleSave(viewAfterSave: boolean) {
     if (!profile) return
     if (isDeleted) {
-      toast.error('Orcamentos excluidos nao podem ser editados.')
+      toast.error('Orçamentos excluídos não podem ser editados.')
       return
     }
 
@@ -216,7 +222,13 @@ export function OrcamentoEditor({ existing }: Props) {
 
     setSaving(true)
     try {
-      const saved = await saveOrcamento({ ...result.data, total, id: existing?.id }, profile)
+      const saved = await saveOrcamento({
+        ...result.data,
+        revisao: draft.revisao,
+        parentId: draft.parentId,
+        total,
+        id: existing?.id
+      }, profile)
       toast.success(`Orçamento ${formatOrcamentoNumero(saved.numero)} salvo.`)
       navigate(viewAfterSave ? `/orcamentos/${saved.id}` : `/orcamentos/${saved.id}/editar`)
     } catch (err) {
@@ -232,10 +244,10 @@ export function OrcamentoEditor({ existing }: Props) {
         <form className="panel editor-form" onSubmit={(event) => event.preventDefault()}>
           <div className="panel-heading">
             <div>
-              <h2>{existing ? `Editar orçamento ${formatOrcamentoNumero(existing.numero)}` : 'Novo orçamento'}</h2>
+              <h2>{existing ? `Editar orçamento ${formatOrcamentoNumero(existing.numero, existing.revisao)}` : 'Novo orçamento'}</h2>
               <p>{existing ? 'O número permanece fixo.' : 'O número oficial será gerado ao salvar.'}</p>
             </div>
-            <strong className="number-pill">{existing ? formatOrcamentoNumero(existing.numero) : 'Gerado ao salvar'}</strong>
+            <strong className="number-pill">{existing ? formatOrcamentoNumero(existing.numero, existing.revisao) : 'Gerado ao salvar'}</strong>
           </div>
 
           {existing && ['aprovado', 'recusado', 'cancelado'].includes(existing.status) ? (
@@ -355,9 +367,11 @@ export function OrcamentoEditor({ existing }: Props) {
                   onChange={(event) => updateItem(index, { valorTotal: fromInputNumber(event.target.value) ?? 0 })}
                   disabled={item.quantidade !== null && item.valorUnitario !== null}
                 />
-                <button className="ghost-icon" type="button" onClick={() => removeItem(index)} aria-label="Remover item" disabled={isDeleted}>
-                  <Trash2 size={15} />
-                </button>
+                <div className="items-action-cell">
+                  <button className="ghost-icon" type="button" onClick={() => removeItem(index)} aria-label="Remover item" disabled={isDeleted}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

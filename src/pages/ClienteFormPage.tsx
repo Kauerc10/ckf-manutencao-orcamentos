@@ -1,5 +1,5 @@
 import { ArrowLeft, Building2, IdCard, MapPin, Plus, Save, ShieldCheck, Trash2, UserRound } from 'lucide-react'
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getCliente, saveCliente } from '../data/clienteRepository'
@@ -8,14 +8,13 @@ import {
   formatClienteDocumento,
   formatPhone,
   formatRg,
-  formatTags,
   hasClienteAddress,
   normalizeClienteRepresentantesForSave,
-  parseTags,
   sanitizeClienteDraftByTipo,
 } from '../lib/clientes'
 import { clienteFormSchema } from '../lib/validations'
 import { useAuthStore } from '../stores/authStore'
+import { useClientes } from '../hooks/useClientes'
 import type { Cliente, ClienteDraft, ClienteRepresentante, ClienteTipo } from '../types'
 
 function emptyRepresentante(principal = false): ClienteRepresentante {
@@ -106,6 +105,48 @@ export function ClienteFormPage() {
   const [loading, setLoading] = useState(Boolean(id))
   const [saving, setSaving] = useState(false)
   const [showAddressWarning, setShowAddressWarning] = useState(false)
+  const [loadingCep, setLoadingCep] = useState(false)
+  const [loadingCnpj, setLoadingCnpj] = useState(false)
+  const { clientes } = useClientes()
+  const [isTagsFocused, setIsTagsFocused] = useState(false)
+  const [focusedTagIndex, setFocusedTagIndex] = useState(-1)
+  const tagsContainerRef = useRef<HTMLDivElement>(null)
+  const tagsInputRef = useRef<HTMLInputElement>(null)
+
+  const allTags = useMemo(() => {
+    if (!clientes) return []
+    const set = new Set<string>()
+    clientes.forEach((c) => {
+      if (Array.isArray(c.tags)) {
+        c.tags.forEach((t) => {
+          if (t && typeof t === 'string') set.add(t.trim())
+        })
+      }
+    })
+    return [...set].sort()
+  }, [clientes])
+
+  const tagSuggestions = useMemo(() => {
+    const query = tagsInput.trim().toLowerCase()
+    const currentTags = draft.tags || []
+    return allTags.filter((tag) => {
+      const matchQuery = tag.toLowerCase().includes(query)
+      const isAlreadyAdded = currentTags.some((t) => t.toLowerCase() === tag.toLowerCase())
+      return matchQuery && !isAlreadyAdded
+    })
+  }, [allTags, tagsInput, draft.tags])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tagsContainerRef.current && !tagsContainerRef.current.contains(event.target as Node)) {
+        setIsTagsFocused(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -113,7 +154,7 @@ export function ClienteFormPage() {
       if (cliente) {
         const next = draftFromCliente(cliente)
         setDraft(next)
-        setTagsInput(formatTags(next.tags))
+        setTagsInput('')
       }
       setLoading(false)
     })
@@ -125,6 +166,131 @@ export function ClienteFormPage() {
 
   function updateField<K extends DraftField>(field: K, value: ClienteDraft[K]) {
     updateDraft({ [field]: value } as Pick<ClienteDraft, K>)
+  }
+
+  async function handleSearchCep(cleanCep: string) {
+    if (cleanCep.length !== 8) return
+    setLoadingCep(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`)
+      if (!res.ok) throw new Error('Falha ao buscar CEP')
+      const data = await res.json()
+      if (data.erro) {
+        toast.error('CEP não encontrado.')
+        return
+      }
+      setDraft((current) => ({
+        ...current,
+        logradouro: data.logradouro || current.logradouro,
+        bairro: data.bairro || current.bairro,
+        cidade: data.localidade || current.cidade,
+        uf: (data.uf || current.uf).toUpperCase(),
+      }))
+      toast.success('Endereço preenchido via CEP!')
+    } catch (err) {
+      console.error(err)
+      toast.error('Erro ao buscar o CEP. Digite o endereço manualmente.')
+    } finally {
+      setLoadingCep(false)
+    }
+  }
+
+  async function handleSearchCnpj() {
+    const cleanCnpj = draft.documento.replace(/\D/g, '')
+    if (cleanCnpj.length !== 14) {
+      toast.error('CNPJ inválido.')
+      return
+    }
+    setLoadingCnpj(true)
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`)
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('CNPJ não encontrado.')
+        }
+        throw new Error('Falha ao consultar CNPJ.')
+      }
+      const data = await res.json()
+      
+      setDraft((current) => {
+        let telefoneFormatted = current.telefonePrincipal
+        const rawPhone = data.ddd_telefone_1 || data.telefone
+        if (rawPhone) {
+          telefoneFormatted = formatPhone(rawPhone)
+        }
+        let cepFormatted = current.cep
+        if (data.cep) {
+          cepFormatted = formatCep(data.cep)
+        }
+        return {
+          ...current,
+          nome: data.razao_social || current.nome,
+          nomeFantasia: data.nome_fantasia || current.nomeFantasia || data.razao_social || '',
+          email: data.email || current.email,
+          telefonePrincipal: telefoneFormatted,
+          cep: cepFormatted,
+          logradouro: data.logradouro || current.logradouro,
+          numero: data.numero || current.numero,
+          bairro: data.bairro || current.bairro,
+          cidade: data.municipio || current.cidade,
+          uf: (data.uf || current.uf).toUpperCase(),
+        }
+      })
+      toast.success('Dados da empresa preenchidos com sucesso!')
+    } catch (err) {
+      console.error(err)
+      toast.error(err instanceof Error ? err.message : 'Erro ao consultar CNPJ.')
+    } finally {
+      setLoadingCnpj(false)
+    }
+  }
+
+  const addTag = (tag: string) => {
+    const cleanTag = tag.trim().replace(/,/g, '')
+    if (!cleanTag) return
+    const currentTags = draft.tags || []
+    if (!currentTags.some((t) => t.toLowerCase() === cleanTag.toLowerCase())) {
+      updateField('tags', [...currentTags, cleanTag])
+    }
+    setTagsInput('')
+    setFocusedTagIndex(-1)
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    const currentTags = draft.tags || []
+    updateField('tags', currentTags.filter((t) => t !== tagToRemove))
+  }
+
+  const handleTagInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    const currentTags = draft.tags || []
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault()
+      if (focusedTagIndex >= 0 && focusedTagIndex < tagSuggestions.length) {
+        const selected = tagSuggestions[focusedTagIndex]
+        addTag(selected)
+      } else if (tagsInput.trim()) {
+        addTag(tagsInput.trim())
+      }
+    } else if (event.key === 'Backspace' && !tagsInput) {
+      if (currentTags.length > 0) {
+        const nextTags = [...currentTags]
+        nextTags.pop()
+        updateField('tags', nextTags)
+      }
+    } else if (event.key === 'ArrowDown') {
+      if (tagSuggestions.length > 0) {
+        event.preventDefault()
+        setFocusedTagIndex((prev) => (prev < tagSuggestions.length - 1 ? prev + 1 : prev))
+      }
+    } else if (event.key === 'ArrowUp') {
+      if (tagSuggestions.length > 0) {
+        event.preventDefault()
+        setFocusedTagIndex((prev) => (prev > 0 ? prev - 1 : -1))
+      }
+    } else if (event.key === 'Escape') {
+      setIsTagsFocused(false)
+      tagsInputRef.current?.blur()
+    }
   }
 
   function updateMaskedField(field: DraftField, value: string) {
@@ -144,7 +310,12 @@ export function ClienteFormPage() {
     }
 
     if (field === 'cep') {
-      updateField('cep', formatCep(value))
+      const formatted = formatCep(value)
+      updateField('cep', formatted)
+      const clean = formatted.replace(/\D/g, '')
+      if (clean.length === 8) {
+        void handleSearchCep(clean)
+      }
       return
     }
 
@@ -209,7 +380,7 @@ export function ClienteFormPage() {
 
     const payload = {
       ...draft,
-      tags: parseTags(tagsInput),
+      tags: draft.tags,
       representantes: draft.tipo === 'cnpj' ? normalizeClienteRepresentantesForSave(draft.representantes) : [],
     }
     const result = clienteFormSchema.safeParse(payload)
@@ -262,11 +433,11 @@ export function ClienteFormPage() {
             <h3>{summary}</h3>
           </div>
           <div className="client-progress-strip" aria-label="Blocos do cadastro">
-            <span>Identificacao</span>
+            <span>Identificação</span>
             <span>Contato</span>
-            <span>Endereco</span>
+            <span>Endereço</span>
             {draft.tipo === 'cnpj' ? <span>Representantes</span> : null}
-            <span>Observacoes</span>
+            <span>Observações</span>
           </div>
         </section>
 
@@ -274,7 +445,7 @@ export function ClienteFormPage() {
           <div className="client-section-heading">
             <ShieldCheck size={18} />
             <div>
-              <h3>Tipo e identificacao</h3>
+              <h3>Tipo e identificação</h3>
             </div>
           </div>
 
@@ -299,7 +470,7 @@ export function ClienteFormPage() {
 
           <div className="client-section-grid">
             <label className="span-2">
-              {labelCaption(draft.tipo === 'cnpj' ? 'Razao social' : 'Nome completo')}
+              {labelCaption(draft.tipo === 'cnpj' ? 'Razão social' : 'Nome completo')}
               <input
                 autoComplete={draft.tipo === 'cnpj' ? 'organization' : 'name'}
                 value={draft.nome}
@@ -307,15 +478,29 @@ export function ClienteFormPage() {
               />
             </label>
 
-            <label>
-              {labelCaption(draft.tipo === 'cnpj' ? 'CNPJ' : 'CPF')}
-              <input
-                inputMode="numeric"
-                autoComplete="off"
-                value={draft.documento}
-                onChange={(event) => updateMaskedField('documento', event.target.value)}
-              />
-            </label>
+            <div className="cnpj-input-container">
+              <label className="cnpj-label">
+                {labelCaption(draft.tipo === 'cnpj' ? 'CNPJ' : 'CPF')}
+                <div className="cnpj-input-wrapper">
+                  <input
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={draft.documento}
+                    onChange={(event) => updateMaskedField('documento', event.target.value)}
+                  />
+                  {draft.tipo === 'cnpj' && (
+                    <button
+                      type="button"
+                      className="secondary-button compact-btn"
+                      onClick={handleSearchCnpj}
+                      disabled={loadingCnpj || draft.documento.replace(/\D/g, '').length !== 14}
+                    >
+                      {loadingCnpj ? 'Buscando...' : 'Consultar CNPJ'}
+                    </button>
+                  )}
+                </div>
+              </label>
+            </div>
 
             {draft.tipo === 'cpf' ? (
               <label>
@@ -336,7 +521,7 @@ export function ClienteFormPage() {
                 </label>
 
                 <label>
-                  {labelCaption('Inscricao estadual', false)}
+                  {labelCaption('Inscrição estadual', false)}
                   <input value={draft.inscricaoEstadual} onChange={(event) => updateField('inscricaoEstadual', event.target.value)} />
                 </label>
               </>
@@ -388,21 +573,36 @@ export function ClienteFormPage() {
           <div className="client-section-heading">
             <MapPin size={18} />
             <div>
-              <h3>Endereco</h3>
+              <h3>Endereço</h3>
             </div>
           </div>
 
           <div className="client-section-grid">
-            <label>
-              {labelCaption('CEP', false)}
-              <input inputMode="numeric" autoComplete="postal-code" value={draft.cep} onChange={(event) => updateMaskedField('cep', event.target.value)} />
-            </label>
+            <div className="cnpj-input-container">
+              <label className="cnpj-label">
+                <span className="field-label-row">
+                  <span>CEP</span>
+                  {loadingCep ? <span style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: 'bold' }}>Buscando...</span> : null}
+                </span>
+                <div className="cnpj-input-wrapper">
+                  <input inputMode="numeric" autoComplete="postal-code" value={draft.cep} onChange={(event) => updateMaskedField('cep', event.target.value)} disabled={loadingCep} />
+                  <button
+                    type="button"
+                    className="secondary-button compact-btn"
+                    onClick={() => handleSearchCep(draft.cep.replace(/\D/g, ''))}
+                    disabled={loadingCep || draft.cep.replace(/\D/g, '').length !== 8}
+                  >
+                    {loadingCep ? 'Buscando...' : 'Consultar CEP'}
+                  </button>
+                </div>
+              </label>
+            </div>
             <label className="span-2">
               {labelCaption('Logradouro', false)}
               <input autoComplete="address-line1" value={draft.logradouro} onChange={(event) => updateField('logradouro', event.target.value)} />
             </label>
             <label>
-              {labelCaption('Numero', false)}
+              {labelCaption('Número', false)}
               <input inputMode="numeric" autoComplete="address-line2" value={draft.numero} onChange={(event) => updateField('numero', event.target.value)} />
             </label>
             <label>
@@ -427,7 +627,7 @@ export function ClienteFormPage() {
               />
             </label>
             <label className="span-2">
-              {labelCaption('Referencia de acesso', false)}
+              {labelCaption('Referência de acesso', false)}
               <input value={draft.referenciaAcesso} onChange={(event) => updateField('referenciaAcesso', event.target.value)} />
             </label>
           </div>
@@ -497,7 +697,7 @@ export function ClienteFormPage() {
                       />
                     </label>
                     <label className="span-2">
-                      {labelCaption('Observacao', false)}
+                      {labelCaption('Observação', false)}
                       <input
                         value={representante.observacao}
                         onChange={(event) => updateRepresentante(index, { observacao: event.target.value })}
@@ -514,24 +714,84 @@ export function ClienteFormPage() {
           <div className="client-section-heading">
             <Save size={18} />
             <div>
-              <h3>Observacoes e organizacao</h3>
+              <h3>Observações e organização</h3>
             </div>
           </div>
 
           <div className="client-section-grid">
-            <label className="span-2">
+            <div className="span-2" ref={tagsContainerRef} style={{ position: 'relative' }}>
               {labelCaption('Tags', false)}
-              <input value={tagsInput} onChange={(event) => setTagsInput(event.target.value)} placeholder="condominio, recorrente, residencial" />
-            </label>
+              <div
+                className={`tags-input-container ${isTagsFocused ? 'focused' : ''}`}
+                onClick={() => tagsInputRef.current?.focus()}
+              >
+                {(draft.tags || []).map((tag) => (
+                  <span key={tag} className="tag-chip">
+                    {tag}
+                    <button
+                      type="button"
+                      className="tag-chip-delete"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeTag(tag)
+                      }}
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+                <input
+                  ref={tagsInputRef}
+                  type="text"
+                  className="tags-input-field"
+                  value={tagsInput}
+                  onChange={(e) => {
+                    setTagsInput(e.target.value)
+                    setFocusedTagIndex(-1)
+                  }}
+                  onFocus={() => setIsTagsFocused(true)}
+                  onKeyDown={handleTagInputKeyDown}
+                  placeholder={draft.tags?.length ? '' : 'condominio, recorrente, residencial'}
+                />
+              </div>
+              {isTagsFocused && (tagsInput.trim() !== '' || tagSuggestions.length > 0) && (
+                <ul className="tags-autocomplete-dropdown">
+                  {tagSuggestions.map((suggestion, index) => (
+                    <li
+                      key={suggestion}
+                      className={`tags-autocomplete-option ${index === focusedTagIndex ? 'highlighted' : ''}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        addTag(suggestion)
+                      }}
+                      onMouseEnter={() => setFocusedTagIndex(index)}
+                    >
+                      {suggestion}
+                    </li>
+                  ))}
+                  {tagSuggestions.length === 0 && tagsInput.trim() !== '' && (
+                    <li
+                      className="tags-autocomplete-option highlighted"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        addTag(tagsInput)
+                      }}
+                    >
+                      Criar tag &ldquo;{tagsInput.trim()}&rdquo;
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
             <label className="span-2">
-              {labelCaption('Observacoes', false)}
+              {labelCaption('Observações', false)}
               <textarea rows={4} value={draft.observacoes} onChange={(event) => updateField('observacoes', event.target.value)} />
             </label>
           </div>
         </section>
 
         <div className="form-footer client-submit-bar">
-          <span className="form-note">Clientes arquivados continuam no historico dos orcamentos e da operacao.</span>
+          <span className="form-note">Clientes arquivados continuam no histórico dos orçamentos e da operação.</span>
           <button className="primary-button" type="submit" disabled={saving}>
             <Save size={16} />
             {saving ? 'Salvando...' : 'Salvar cliente'}
@@ -541,10 +801,10 @@ export function ClienteFormPage() {
         {showAddressWarning ? (
           <div className="modal-backdrop" role="presentation">
             <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="address-warning-title">
-              <h2 id="address-warning-title">Salvar sem endereco?</h2>
+              <h2 id="address-warning-title">Salvar sem endereço?</h2>
               <p>
-                Este cliente sera salvo sem endereco operacional. Voce pode completar depois, mas visitas tecnicas e filtros por
-                local ficarao incompletos por enquanto.
+                Este cliente será salvo sem endereço operacional. Você pode completar depois, mas visitas técnicas e filtros por
+                local ficarão incompletos por enquanto.
               </p>
               <div className="dialog-actions">
                 <button className="secondary-button" type="button" onClick={closeAddressWarningAndEdit}>
@@ -559,7 +819,7 @@ export function ClienteFormPage() {
                     void saveDraft(true)
                   }}
                 >
-                  Salvar sem endereco
+                  Salvar sem endereço
                 </button>
               </div>
             </div>

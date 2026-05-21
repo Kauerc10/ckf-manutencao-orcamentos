@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { EMPRESA } from './constants'
-import { formatCurrency, formatDateBR, parseLocalizedNumber, sanitizeFilePart, toOrcamentoFilename } from './formatters'
+import { formatCurrency, formatDateBR, formatOrcamentoNumero, parseLocalizedNumber, sanitizeFilePart, toOrcamentoFilename } from './formatters'
 
 describe('formatters', () => {
   it('formats Brazilian currency and date values', () => {
@@ -13,6 +13,19 @@ describe('formatters', () => {
     expect(sanitizeFilePart('Filial São José / Elevador #2')).toBe('Filial_Sao_Jose_Elevador_2')
     expect(toOrcamentoFilename(285, 'Filial São José / Elevador #2', 'pdf')).toBe(
       'Orcamento_285_Filial_Sao_Jose_Elevador_2.pdf',
+    )
+  })
+
+  it('formats budget numbers with revisions', () => {
+    expect(formatOrcamentoNumero(285)).toBe('285')
+    expect(formatOrcamentoNumero(5, 0)).toBe('005')
+    expect(formatOrcamentoNumero(285, 1)).toBe('285-R1')
+    expect(formatOrcamentoNumero(5, 2)).toBe('005-R2')
+  })
+
+  it('generates correct file name for budget revisions', () => {
+    expect(toOrcamentoFilename(285, 'Elevador #2', 'pdf', 1)).toBe(
+      'Orcamento_285-R1_Elevador_2.pdf',
     )
   })
 

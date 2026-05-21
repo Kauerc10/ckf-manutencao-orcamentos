@@ -1,12 +1,12 @@
-import { Copy, Download, Edit3, FileSpreadsheet, RotateCcw } from 'lucide-react'
+import { Copy, Download, Edit3, FileSpreadsheet, GitBranch, RotateCcw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { DocumentPreview } from '../components/orcamento/DocumentPreview'
 import { StatusBadge } from '../components/orcamento/StatusBadge'
-import { getOrcamento, saveOrcamento } from '../data/orcamentoRepository'
+import { cloneOrcamentoAsRevision, getOrcamento, saveOrcamento } from '../data/orcamentoRepository'
 import { formatClienteDocumento } from '../lib/clientes'
-import { formatCurrency, formatDateBR, formatDateTimeBR } from '../lib/formatters'
+import { formatCurrency, formatDateBR, formatDateTimeBR, formatOrcamentoNumero } from '../lib/formatters'
 import { createDuplicateDraft } from '../lib/orcamento'
 import { useOrcamentoActions } from '../hooks/useOrcamentoActions'
 import { useAuthStore } from '../stores/authStore'
@@ -18,6 +18,7 @@ export function VisualizarOrcamento() {
   const profile = useAuthStore((state) => state.profile)
   const [orcamento, setOrcamento] = useState<Orcamento | null>(null)
   const [loading, setLoading] = useState(true)
+  const [creatingRevision, setCreatingRevision] = useState(false)
   const actions = useOrcamentoActions()
 
   useEffect(() => {
@@ -40,6 +41,24 @@ export function VisualizarOrcamento() {
     navigate(`/orcamentos/${created.id}/editar`)
   }
 
+  async function createRevision() {
+    if (!orcamento || !profile) return
+    if (orcamento.status === 'excluido') {
+      toast.error('Orçamentos excluídos não podem ser revisados.')
+      return
+    }
+    setCreatingRevision(true)
+    try {
+      const revisao = await cloneOrcamentoAsRevision(orcamento.id, profile)
+      toast.success(`Revisão ${formatOrcamentoNumero(revisao.numero, revisao.revisao)} criada com sucesso!`)
+      navigate(`/orcamentos/${revisao.id}/editar`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar revisão.')
+    } finally {
+      setCreatingRevision(false)
+    }
+  }
+
   if (loading) return <div className="skeleton-block">Carregando orçamento...</div>
   if (!orcamento) return <div className="error-state">Orçamento não encontrado.</div>
 
@@ -50,7 +69,12 @@ export function VisualizarOrcamento() {
       <div className="panel">
         <div className="panel-heading">
           <div>
-            <h2>Orçamento {orcamento.numero}</h2>
+            <h2>
+              Orçamento {formatOrcamentoNumero(orcamento.numero, orcamento.revisao)}
+              {orcamento.revisao > 0 && (
+                <span className="revision-badge">REV {orcamento.revisao}</span>
+              )}
+            </h2>
             <p>{orcamento.servicoCliente}</p>
           </div>
           <StatusBadge status={orcamento.status} />
@@ -122,6 +146,16 @@ export function VisualizarOrcamento() {
           ) : null}
         </dl>
 
+        {orcamento.parentId ? (
+          <div className="info-banner" style={{ marginBottom: '0.5rem' }}>
+            <GitBranch size={15} />
+            Esta é uma revisão. &nbsp;
+            <Link className="inline-link" to={`/orcamentos/${orcamento.parentId}`}>
+              Ver orçamento original
+            </Link>
+          </div>
+        ) : null}
+
         <div className="button-row wrap">
           <button className="primary-button" type="button" onClick={() => actions.downloadPdf(orcamento)}>
             <Download size={17} />
@@ -141,6 +175,17 @@ export function VisualizarOrcamento() {
             <button className="secondary-button" type="button" onClick={duplicateHere}>
               <Copy size={17} />
               Duplicar
+            </button>
+          ) : null}
+          {!isDeleted ? (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={createRevision}
+              disabled={creatingRevision}
+            >
+              <GitBranch size={17} />
+              {creatingRevision ? 'Criando...' : 'Criar revisão'}
             </button>
           ) : null}
           <button className="secondary-button" type="button" onClick={() => navigate(-1)}>
