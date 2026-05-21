@@ -34,6 +34,8 @@ function fromInputNumber(value: string): number | null {
 function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VALIDADE_DIAS, observacoesPadrao = ''): OrcamentoDraft {
   if (existing) {
     return {
+      revisao: existing.revisao,
+      parentId: existing.parentId ?? null,
       dataOrcamento: existing.dataOrcamento,
       servicoCliente: existing.servicoCliente,
       clienteId: existing.clienteId ?? null,
@@ -50,6 +52,8 @@ function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VA
   }
 
   return {
+    revisao: 0,
+    parentId: null,
     dataOrcamento: todayIso(),
     servicoCliente: '',
     clienteId: null,
@@ -94,6 +98,8 @@ export function OrcamentoEditor({ existing }: Props) {
   const preview: Orcamento = {
     id: existing?.id ?? 'preview',
     numero: existing?.numero ?? 0,
+    revisao: draft.revisao,
+    parentId: draft.parentId ?? null,
     dataOrcamento: draft.dataOrcamento,
     servicoCliente: draft.servicoCliente,
     clienteId: draft.clienteId,
@@ -216,7 +222,13 @@ export function OrcamentoEditor({ existing }: Props) {
 
     setSaving(true)
     try {
-      const saved = await saveOrcamento({ ...result.data, total, id: existing?.id }, profile)
+      const saved = await saveOrcamento({
+        ...result.data,
+        revisao: draft.revisao,
+        parentId: draft.parentId,
+        total,
+        id: existing?.id
+      }, profile)
       toast.success(`Orçamento ${formatOrcamentoNumero(saved.numero)} salvo.`)
       navigate(viewAfterSave ? `/orcamentos/${saved.id}` : `/orcamentos/${saved.id}/editar`)
     } catch (err) {

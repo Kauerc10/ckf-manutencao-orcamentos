@@ -8,10 +8,8 @@ import {
   formatClienteDocumento,
   formatPhone,
   formatRg,
-  formatTags,
   hasClienteAddress,
   normalizeClienteRepresentantesForSave,
-  parseTags,
   sanitizeClienteDraftByTipo,
 } from '../lib/clientes'
 import { clienteFormSchema } from '../lib/validations'

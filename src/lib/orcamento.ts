@@ -113,6 +113,8 @@ export function createDuplicateDraft(orcamento: Orcamento): OrcamentoDraft {
   }))
 
   return {
+    revisao: 0,
+    parentId: null,
     dataOrcamento: orcamento.dataOrcamento,
     servicoCliente: orcamento.servicoCliente,
     clienteId: orcamento.clienteId ?? null,
