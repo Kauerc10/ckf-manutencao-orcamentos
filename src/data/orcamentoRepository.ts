@@ -173,7 +173,7 @@ function normalizeDeletionReason(motivo: string): string {
 function assertDeleteInput(input: DeleteInput): string {
   const motivo = normalizeDeletionReason(input.motivo)
   if (!motivo) {
-    throw new Error('Informe o motivo da exclusao.')
+    throw new Error('Informe o motivo da exclusão.')
   }
 
   if (!input.adminIdentifier.trim() || !input.adminPassword.trim()) {
@@ -198,7 +198,7 @@ function identifierMatchesProfile(identifier: string, profile: Profile): boolean
 
 function approveLocalDeletion(input: DeleteInput): Profile {
   if (!identifierMatchesProfile(input.adminIdentifier, DEMO_PROFILE) || input.adminPassword !== 'demo-local') {
-    throw new Error('Credenciais de administrador invalidas.')
+    throw new Error('Credenciais de administrador inválidas.')
   }
 
   return DEMO_PROFILE
@@ -216,12 +216,12 @@ async function readFunctionErrorMessage(error: unknown): Promise<string> {
     }
   }
 
-  return error instanceof Error ? error.message : 'Nao foi possivel excluir o orcamento.'
+  return error instanceof Error ? error.message : 'Não foi possível excluir o orçamento.'
 }
 
 function assertEditable(orcamento: Orcamento): void {
   if (orcamento.status === 'excluido') {
-    throw new Error('Orcamentos excluidos nao podem ser editados.')
+    throw new Error('Orçamentos excluídos não podem ser editados.')
   }
 }
 

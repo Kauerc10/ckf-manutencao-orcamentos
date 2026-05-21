@@ -62,7 +62,7 @@ describe('orcamento repository deletion audit', () => {
         { id: 'demo-1', motivo: 'Duplicado.', adminIdentifier: DEMO_PROFILE.email, adminPassword: 'senha-errada' },
         DEMO_PROFILE,
       ),
-    ).rejects.toThrow('Credenciais de administrador invalidas.')
+    ).rejects.toThrow('Credenciais de administrador inválidas.')
 
     await expect(
       deleteOrcamento(
@@ -70,7 +70,7 @@ describe('orcamento repository deletion audit', () => {
         DEMO_PROFILE,
       ),
     ).rejects.toThrow(
-      'Informe o motivo da exclusao.',
+      'Informe o motivo da exclusão.',
     )
   })
 
@@ -86,7 +86,7 @@ describe('orcamento repository deletion audit', () => {
     )
 
     await expect(saveOrcamento({ ...validDraft, id: 'demo-1' }, DEMO_PROFILE)).rejects.toThrow(
-      'Orcamentos excluidos nao podem ser editados.',
+      'Orçamentos excluídos não podem ser editados.',
     )
   })
 

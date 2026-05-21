@@ -433,11 +433,11 @@ export function ClienteFormPage() {
             <h3>{summary}</h3>
           </div>
           <div className="client-progress-strip" aria-label="Blocos do cadastro">
-            <span>Identificacao</span>
+            <span>Identificação</span>
             <span>Contato</span>
-            <span>Endereco</span>
+            <span>Endereço</span>
             {draft.tipo === 'cnpj' ? <span>Representantes</span> : null}
-            <span>Observacoes</span>
+            <span>Observações</span>
           </div>
         </section>
 
@@ -445,7 +445,7 @@ export function ClienteFormPage() {
           <div className="client-section-heading">
             <ShieldCheck size={18} />
             <div>
-              <h3>Tipo e identificacao</h3>
+              <h3>Tipo e identificação</h3>
             </div>
           </div>
 
@@ -470,7 +470,7 @@ export function ClienteFormPage() {
 
           <div className="client-section-grid">
             <label className="span-2">
-              {labelCaption(draft.tipo === 'cnpj' ? 'Razao social' : 'Nome completo')}
+              {labelCaption(draft.tipo === 'cnpj' ? 'Razão social' : 'Nome completo')}
               <input
                 autoComplete={draft.tipo === 'cnpj' ? 'organization' : 'name'}
                 value={draft.nome}
@@ -521,7 +521,7 @@ export function ClienteFormPage() {
                 </label>
 
                 <label>
-                  {labelCaption('Inscricao estadual', false)}
+                  {labelCaption('Inscrição estadual', false)}
                   <input value={draft.inscricaoEstadual} onChange={(event) => updateField('inscricaoEstadual', event.target.value)} />
                 </label>
               </>
@@ -573,24 +573,36 @@ export function ClienteFormPage() {
           <div className="client-section-heading">
             <MapPin size={18} />
             <div>
-              <h3>Endereco</h3>
+              <h3>Endereço</h3>
             </div>
           </div>
 
           <div className="client-section-grid">
-            <label>
-              <span className="field-label-row">
-                <span>CEP</span>
-                {loadingCep ? <span style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: 'bold' }}>Buscando...</span> : null}
-              </span>
-              <input inputMode="numeric" autoComplete="postal-code" value={draft.cep} onChange={(event) => updateMaskedField('cep', event.target.value)} disabled={loadingCep} />
-            </label>
+            <div className="cnpj-input-container">
+              <label className="cnpj-label">
+                <span className="field-label-row">
+                  <span>CEP</span>
+                  {loadingCep ? <span style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: 'bold' }}>Buscando...</span> : null}
+                </span>
+                <div className="cnpj-input-wrapper">
+                  <input inputMode="numeric" autoComplete="postal-code" value={draft.cep} onChange={(event) => updateMaskedField('cep', event.target.value)} disabled={loadingCep} />
+                  <button
+                    type="button"
+                    className="secondary-button compact-btn"
+                    onClick={() => handleSearchCep(draft.cep.replace(/\D/g, ''))}
+                    disabled={loadingCep || draft.cep.replace(/\D/g, '').length !== 8}
+                  >
+                    {loadingCep ? 'Buscando...' : 'Consultar CEP'}
+                  </button>
+                </div>
+              </label>
+            </div>
             <label className="span-2">
               {labelCaption('Logradouro', false)}
               <input autoComplete="address-line1" value={draft.logradouro} onChange={(event) => updateField('logradouro', event.target.value)} />
             </label>
             <label>
-              {labelCaption('Numero', false)}
+              {labelCaption('Número', false)}
               <input inputMode="numeric" autoComplete="address-line2" value={draft.numero} onChange={(event) => updateField('numero', event.target.value)} />
             </label>
             <label>
@@ -615,7 +627,7 @@ export function ClienteFormPage() {
               />
             </label>
             <label className="span-2">
-              {labelCaption('Referencia de acesso', false)}
+              {labelCaption('Referência de acesso', false)}
               <input value={draft.referenciaAcesso} onChange={(event) => updateField('referenciaAcesso', event.target.value)} />
             </label>
           </div>
@@ -685,7 +697,7 @@ export function ClienteFormPage() {
                       />
                     </label>
                     <label className="span-2">
-                      {labelCaption('Observacao', false)}
+                      {labelCaption('Observação', false)}
                       <input
                         value={representante.observacao}
                         onChange={(event) => updateRepresentante(index, { observacao: event.target.value })}
@@ -702,7 +714,7 @@ export function ClienteFormPage() {
           <div className="client-section-heading">
             <Save size={18} />
             <div>
-              <h3>Observacoes e organizacao</h3>
+              <h3>Observações e organização</h3>
             </div>
           </div>
 
@@ -772,14 +784,14 @@ export function ClienteFormPage() {
               )}
             </div>
             <label className="span-2">
-              {labelCaption('Observacoes', false)}
+              {labelCaption('Observações', false)}
               <textarea rows={4} value={draft.observacoes} onChange={(event) => updateField('observacoes', event.target.value)} />
             </label>
           </div>
         </section>
 
         <div className="form-footer client-submit-bar">
-          <span className="form-note">Clientes arquivados continuam no historico dos orcamentos e da operacao.</span>
+          <span className="form-note">Clientes arquivados continuam no histórico dos orçamentos e da operação.</span>
           <button className="primary-button" type="submit" disabled={saving}>
             <Save size={16} />
             {saving ? 'Salvando...' : 'Salvar cliente'}
@@ -789,10 +801,10 @@ export function ClienteFormPage() {
         {showAddressWarning ? (
           <div className="modal-backdrop" role="presentation">
             <div className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="address-warning-title">
-              <h2 id="address-warning-title">Salvar sem endereco?</h2>
+              <h2 id="address-warning-title">Salvar sem endereço?</h2>
               <p>
-                Este cliente sera salvo sem endereco operacional. Voce pode completar depois, mas visitas tecnicas e filtros por
-                local ficarao incompletos por enquanto.
+                Este cliente será salvo sem endereço operacional. Você pode completar depois, mas visitas técnicas e filtros por
+                local ficarão incompletos por enquanto.
               </p>
               <div className="dialog-actions">
                 <button className="secondary-button" type="button" onClick={closeAddressWarningAndEdit}>
@@ -807,7 +819,7 @@ export function ClienteFormPage() {
                     void saveDraft(true)
                   }}
                 >
-                  Salvar sem endereco
+                  Salvar sem endereço
                 </button>
               </div>
             </div>

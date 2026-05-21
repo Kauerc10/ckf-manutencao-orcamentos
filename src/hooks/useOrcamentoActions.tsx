@@ -27,12 +27,12 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
   async function duplicate(orcamento: Orcamento) {
     if (!profile) return
     if (orcamento.status === 'excluido') {
-      toast.error('Orcamentos excluidos nao podem ser duplicados.')
+      toast.error('Orçamentos excluídos não podem ser duplicados.')
       return
     }
 
     const created = await saveOrcamento(createDuplicateDraft(orcamento), profile)
-    toast.success(`Orcamento ${created.numero} duplicado.`)
+    toast.success(`Orçamento ${created.numero} duplicado.`)
     await refresh()
     navigate(`/orcamentos/${created.id}/editar`)
   }
@@ -52,7 +52,7 @@ export function useOrcamentoActions(onAfterChange?: () => Promise<void> | void) 
     }
 
     if (!profile) {
-      toast.error('Entre no sistema para solicitar exclusao.')
+      toast.error('Entre no sistema para solicitar exclusão.')
       return
     }
 

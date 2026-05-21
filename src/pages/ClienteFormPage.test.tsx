@@ -130,7 +130,7 @@ describe('ClienteFormPage - CEP and CNPJ Integration', () => {
     })
 
     await waitFor(() => {
-      const nameInput = screen.getByLabelText(/razao social/i) as HTMLInputElement
+      const nameInput = screen.getByLabelText(/razão social/i) as HTMLInputElement
       const phoneInput = screen.getByLabelText(/telefone principal/i) as HTMLInputElement
       const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement
       const logradouroInput = screen.getByLabelText(/logradouro/i) as HTMLInputElement

@@ -209,7 +209,7 @@ export function OrcamentoEditor({ existing }: Props) {
   async function handleSave(viewAfterSave: boolean) {
     if (!profile) return
     if (isDeleted) {
-      toast.error('Orcamentos excluidos nao podem ser editados.')
+      toast.error('Orçamentos excluídos não podem ser editados.')
       return
     }
 
