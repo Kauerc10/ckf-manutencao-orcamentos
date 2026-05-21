@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ClienteFormPage } from './ClienteFormPage'
+import type { Profile } from '../types'
 
 // Mock react-router-dom's navigate and params
 const mockNavigate = vi.fn()
@@ -15,9 +16,20 @@ vi.mock('react-router-dom', async () => {
 })
 
 // Mock stores & hooks
+type MockAuthState = {
+  profile: Profile
+}
+
 vi.mock('../stores/authStore', () => ({
-  useAuthStore: (selector: any) => selector({
-    profile: { id: 'test-user', nome: 'Test User', email: 'test@ckf.com', role: 'admin' }
+  useAuthStore: (selector: (state: MockAuthState) => unknown) => selector({
+    profile: {
+      id: 'test-user',
+      nome: 'Test User',
+      email: 'test@ckf.com',
+      ativo: true,
+      role: 'admin',
+      criadoEm: '',
+    },
   })
 }))
 

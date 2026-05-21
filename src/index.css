@@ -1590,7 +1590,54 @@ textarea:focus {
 .cliente-picker {
   position: relative;
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cliente-picker-skeleton {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.skeleton-line,
+.skeleton-card {
+  position: relative;
+  overflow: hidden;
+  background: #e5e7eb;
+  border-radius: 999px;
+}
+
+.skeleton-line {
+  width: 100%;
+  height: 12px;
+}
+
+.skeleton-title {
+  width: min(260px, 52%);
+  height: 16px;
+}
+
+.skeleton-card {
+  min-height: 96px;
+  border-radius: 8px;
+}
+
+.skeleton-line::after,
+.skeleton-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: skeleton-shimmer 1.2s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .cliente-selected-card {
@@ -1603,39 +1650,36 @@ textarea:focus {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
+.cliente-selected-card.compact {
+  box-shadow: none;
+}
+
 .cliente-selected-card .card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 1px solid #f1f3f5;
-  padding-bottom: 10px;
-  margin-bottom: 4px;
+  gap: 12px;
 }
 
-.cliente-selected-card .title-area h4 {
+.cliente-selected-card .title-area {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cliente-selected-card .title-area h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 17px;
+  line-height: 1.25;
   font-weight: 700;
   color: var(--ink);
+  overflow-wrap: anywhere;
 }
 
-.cliente-selected-card .unlink-button {
-  background: transparent;
-  border: 0;
-  color: #b42318;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background 0.15s ease;
-}
-
-.cliente-selected-card .unlink-button:hover {
-  background: #fdf2f2;
+.cliente-selected-card .nome-fantasia {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .cliente-selected-card .info-grid {
@@ -1652,7 +1696,7 @@ textarea:focus {
   font-size: 10px;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
   font-weight: 700;
   display: block;
   margin-bottom: 2px;
@@ -1663,6 +1707,16 @@ textarea:focus {
   font-weight: 600;
   color: var(--ink);
   overflow-wrap: anywhere;
+}
+
+.cliente-selected-card .info-item {
+  min-width: 0;
+}
+
+.cliente-selected-card .info-item:has(svg) {
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .cliente-selected-card .card-tags {
@@ -1681,22 +1735,45 @@ textarea:focus {
   color: #4d5562;
 }
 
-.cliente-selected-card .card-footer {
+.cliente-selected-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
   padding-top: 10px;
   border-top: 1px solid #f1f3f5;
 }
 
 .cliente-search-container {
   position: relative;
+  display: grid;
+  gap: 8px;
+}
+
+.cliente-search-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
 }
 
 .cliente-search-container .input-wrapper {
   position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.cliente-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
 }
 
 .cliente-picker-input {
+  width: 100%;
+  padding-left: 36px;
   padding-right: 36px;
 }
 
@@ -1716,6 +1793,12 @@ textarea:focus {
   height: 24px;
   border-radius: 50%;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.cliente-search-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .clear-input-button:hover {
@@ -1748,6 +1831,9 @@ textarea:focus {
   background: transparent;
   border-left: 3px solid transparent;
   transition: background 0.15s, border-color 0.15s;
+  display: grid;
+  gap: 5px;
+  min-height: 74px;
 }
 
 .cliente-result-card:hover,
@@ -1758,15 +1844,17 @@ textarea:focus {
 
 .cliente-result-card .result-card-header {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 4px;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: flex-start;
 }
 
 .cliente-result-card .result-name {
   font-weight: 700;
   font-size: 14px;
   color: var(--ink);
+  overflow-wrap: anywhere;
 }
 
 .cliente-result-card .result-fantasia {
@@ -1779,13 +1867,15 @@ textarea:focus {
   color: var(--muted);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .cliente-result-card .result-tags {
   display: flex;
   gap: 6px;
   margin-top: 6px;
+  flex-wrap: wrap;
 }
 
 .tag-badge-small {
@@ -1804,34 +1894,163 @@ textarea:focus {
   font-size: 13px;
 }
 
+.cliente-empty-state,
+.cliente-loading-state {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.cliente-empty-state strong {
+  color: var(--ink);
+}
+
 .quick-client-link-panel {
-  position: sticky;
-  bottom: 0;
-  padding: 10px;
-  background: #f8f9fa;
-  border-top: 1px solid var(--line);
+  padding: 8px 0 0;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   z-index: 5;
 }
 
-.quick-client-link-panel a {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #8a5b00;
-  transition: color 0.15s ease;
+.cliente-refreshing {
+  animation: cliente-refresh-spin 0.9s linear infinite;
 }
 
-.quick-client-link-panel a:hover {
-  color: var(--accent-2);
+@keyframes cliente-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .representante-picker {
   display: grid;
-  gap: 6px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.representante-picker .field-label-row {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.representante-options {
+  display: grid;
+  gap: 8px;
+}
+
+.representante-option-card {
+  width: 100%;
+  min-height: 72px;
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.representante-option-card:hover,
+.representante-option-card.selected {
+  border-color: #c8921f;
+  background: #fffaf0;
+  box-shadow: 0 1px 0 rgba(201, 146, 31, 0.18);
+}
+
+.representante-option-card span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.representante-option-card strong {
+  overflow-wrap: anywhere;
+}
+
+.representante-option-card .representante-card-header {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.rep-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: #111827;
+  color: #fff9e8 !important;
+  font-size: 10px !important;
+  font-weight: 700;
+}
+
+.representante-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.representante-warning-banner {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.representante-warning-banner .warning-content {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .cliente-picker-results {
+    position: static;
+    width: 100%;
+    max-height: none;
+    box-shadow: none;
+    border: 1px solid var(--line);
+    margin-top: 0.5rem;
+  }
+
+  .cliente-search-row,
+  .cliente-selected-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cliente-result-card,
+  .representante-option-card {
+    min-height: 72px;
+    padding: 0.875rem;
+  }
+
+  .cliente-selected-card .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cliente-selected-card .span-all {
+    grid-column: auto;
+  }
+
+  .cliente-selected-actions .secondary-button,
+  .cliente-selected-actions .primary-button,
+  .cliente-selected-actions .danger-button,
+  .cliente-change-cancel {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ── Tags Autocomplete Component ── */

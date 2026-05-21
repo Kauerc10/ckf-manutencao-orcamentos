@@ -65,7 +65,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       try {
         const profile = await loadSupabaseProfile(user.id)
         set({ profile, loading: false, mode: 'supabase' })
-      } catch (error) {
+      } catch {
         await supabase.auth.signOut()
         set({ profile: null, loading: false, mode: 'supabase' })
       }

@@ -66,7 +66,7 @@ const mockClientes: Cliente[] = [
     nome: 'Maria da Silva',
     nomeFantasia: '',
     documento: '111.222.333-44',
-    rg: '',
+    rg: '12.345.678-9',
     email: 'maria@gmail.com',
     telefonePrincipal: '21999998888',
     telefoneAlternativo: '',
@@ -141,6 +141,73 @@ describe('cliente-search utilities', () => {
     expect(indexed).toContain('premium')
     expect(indexed).toContain('kauerc silva')
     expect(indexed).toContain('ceo')
+    expect(indexed).not.toContain('marcos inativo')
+  })
+
+  it('should include RG in the searchable index and search results', () => {
+    const indexed = getClienteSearchText(mockClientes[1])
+    expect(indexed).toContain('12.345.678-9')
+    expect(indexed).toContain('123456789')
+
+    const results = searchClientes(mockClientes, '123456789')
+    expect(results[0]?.id).toBe('2')
+  })
+
+  it('should not match inactive representative data', () => {
+    expect(searchClientes(mockClientes, 'Marcos Inativo')).toHaveLength(0)
+    expect(searchClientes(mockClientes, '11999998888')).toHaveLength(0)
+  })
+
+  it('should prioritize exact document matches over partial matches', () => {
+    const results = searchClientes(
+      [
+        {
+          ...mockClientes[0],
+          id: 'partial-doc',
+          nome: 'Empresa Documento Parcial',
+          documento: '00.012.345/0001-00',
+        },
+        {
+          ...mockClientes[1],
+          id: 'exact-doc',
+          nome: 'Empresa Documento Exato',
+          documento: '123.45',
+        },
+      ],
+      '12345',
+    )
+
+    expect(results[0]?.id).toBe('exact-doc')
+  })
+
+  it('should prioritize names starting with the query over fantasia and tags', () => {
+    const results = searchClientes(
+      [
+        {
+          ...mockClientes[1],
+          id: 'tag-match',
+          nome: 'Cliente Secundario',
+          nomeFantasia: 'Alfa Service',
+          tags: ['alfa'],
+        },
+        {
+          ...mockClientes[0],
+          id: 'name-match',
+          nome: 'Alfa Manutencao',
+          nomeFantasia: '',
+          tags: [],
+        },
+      ],
+      'alfa',
+    )
+
+    expect(results[0]?.id).toBe('name-match')
+  })
+
+  it('should search by active representative phone', () => {
+    const results = searchClientes(mockClientes, '11988887777')
+    expect(results).toHaveLength(1)
+    expect(results[0]?.id).toBe('1')
   })
 
   it('should search active clients, respect the limit, and score/rank matches', () => {
