@@ -367,9 +367,11 @@ export function OrcamentoEditor({ existing }: Props) {
                   onChange={(event) => updateItem(index, { valorTotal: fromInputNumber(event.target.value) ?? 0 })}
                   disabled={item.quantidade !== null && item.valorUnitario !== null}
                 />
-                <button className="ghost-icon" type="button" onClick={() => removeItem(index)} aria-label="Remover item" disabled={isDeleted}>
-                  <Trash2 size={15} />
-                </button>
+                <div className="items-action-cell">
+                  <button className="ghost-icon" type="button" onClick={() => removeItem(index)} aria-label="Remover item" disabled={isDeleted}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
