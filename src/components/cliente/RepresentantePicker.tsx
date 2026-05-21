@@ -1,9 +1,11 @@
+import { useId } from 'react'
 import { Link } from 'react-router-dom'
-import { UserPlus, AlertCircle } from 'lucide-react'
+import { AlertCircle, Mail, Phone, UserPlus } from 'lucide-react'
 import type { Cliente } from '../../types'
 import { getActiveRepresentantes } from '../../lib/cliente-search'
+import { formatPhone } from '../../lib/clientes'
 
-interface RepresentantePickerProps {
+type RepresentantePickerProps = {
   cliente: Cliente | null
   selectedRepresentanteId: string | null
   onSelectRepresentante: (representanteId: string | null) => void
@@ -14,47 +16,74 @@ export function RepresentantePicker({
   selectedRepresentanteId,
   onSelectRepresentante,
 }: RepresentantePickerProps) {
-  // Renders null for CPF clients or when no client is selected
+  const labelId = useId()
+
   if (!cliente || cliente.tipo !== 'cnpj') {
     return null
   }
 
   const activeReps = getActiveRepresentantes(cliente)
-  const hasReps = activeReps.length > 0
 
   return (
     <div className="representante-picker">
-      <label htmlFor="representante-select">Representante do cliente</label>
+      <span id={labelId} className="field-label-row">
+        Representante do cliente
+      </span>
 
-      {hasReps ? (
-        <div className="select-wrapper">
-          <select
-            id="representante-select"
-            value={selectedRepresentanteId ?? ''}
-            onChange={(e) => onSelectRepresentante(e.target.value || null)}
+      {activeReps.length > 0 ? (
+        <div className="representante-options" role="radiogroup" aria-labelledby={labelId}>
+          <button
+            type="button"
+            className={`representante-option-card ${!selectedRepresentanteId ? 'selected' : ''}`}
+            onClick={() => onSelectRepresentante(null)}
+            role="radio"
+            aria-checked={!selectedRepresentanteId}
           >
-            <option value="">Não informado / Sem representante</option>
-            {activeReps.map((rep) => (
-              <option key={rep.id} value={rep.id}>
-                {rep.nome} · {rep.cargo} {rep.principal ? ' (Principal)' : ''}
-              </option>
-            ))}
-          </select>
+            <strong>Sem representante informado</strong>
+            <span>O orçamento ficará vinculado apenas ao cliente.</span>
+          </button>
+
+          {activeReps.map((rep) => (
+            <button
+              key={rep.id ?? rep.nome}
+              type="button"
+              className={`representante-option-card ${selectedRepresentanteId === rep.id ? 'selected' : ''}`}
+              onClick={() => onSelectRepresentante(rep.id ?? null)}
+              role="radio"
+              aria-checked={selectedRepresentanteId === rep.id}
+            >
+              <div className="representante-card-header">
+                <strong>{rep.nome}</strong>
+                {rep.principal ? <span className="rep-badge">Principal</span> : null}
+              </div>
+              <span>{rep.cargo || 'Cargo nao informado'}</span>
+              <span className="representante-line">
+                <Phone size={13} aria-hidden="true" />
+                {rep.telefone ? formatPhone(rep.telefone) : 'Telefone nao informado'}
+              </span>
+              {rep.email ? (
+                <span className="representante-line">
+                  <Mail size={13} aria-hidden="true" />
+                  {rep.email}
+                </span>
+              ) : null}
+            </button>
+          ))}
         </div>
       ) : (
         <div className="representante-warning-banner">
           <div className="warning-content">
             <AlertCircle size={16} className="text-warning" />
-            <span>Nenhum representante ativo cadastrado para este cliente.</span>
+            <span>Este CNPJ nao possui representantes ativos.</span>
           </div>
           <Link
-            className="secondary-button text-sm flex-center gap-1 mt-1"
+            className="secondary-button text-sm"
             to={`/clientes/${cliente.id}/editar`}
             target="_blank"
             rel="noopener noreferrer"
           >
             <UserPlus size={14} />
-            Gerenciar representantes
+            Editar ficha do cliente
           </Link>
         </div>
       )}

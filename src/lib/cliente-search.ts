@@ -17,7 +17,8 @@ export function normalizeSearchDigits(text: string): string {
 
 export function getClienteSearchText(cliente: Cliente): string {
   const reps = (cliente.representantes || [])
-    .map((r) => `${r.nome} ${r.cargo}`)
+    .filter((r) => r.ativo)
+    .map((r) => `${r.nome} ${r.cargo} ${r.telefone}`)
     .join(' ')
   
   return [
@@ -25,6 +26,8 @@ export function getClienteSearchText(cliente: Cliente): string {
     cliente.nomeFantasia || '',
     cliente.documento,
     normalizeSearchDigits(cliente.documento),
+    cliente.rg || '',
+    normalizeSearchDigits(cliente.rg || ''),
     cliente.email || '',
     cliente.telefonePrincipal || '',
     cliente.telefoneAlternativo || '',
@@ -32,7 +35,7 @@ export function getClienteSearchText(cliente: Cliente): string {
     cliente.uf || '',
     `${cliente.cidade || ''}/${cliente.uf || ''}`,
     (cliente.tags || []).join(' '),
-    reps
+    reps,
   ]
     .map(normalizeSearchText)
     .join(' ')
@@ -57,9 +60,12 @@ export function searchClientes(clientes: Cliente[], search: string, limit = 8): 
 
     const searchText = getClienteSearchText(cliente)
     const normalizedDoc = normalizeSearchDigits(cliente.documento)
+    const normalizedRg = normalizeSearchDigits(cliente.rg || '')
     const normalizedPhone1 = normalizeSearchDigits(cliente.telefonePrincipal || '')
     const normalizedPhone2 = normalizeSearchDigits(cliente.telefoneAlternativo || '')
-    const repPhones = (cliente.representantes || []).map((r) => normalizeSearchDigits(r.telefone || ''))
+    const repPhones = (cliente.representantes || [])
+      .filter((r) => r.ativo)
+      .map((r) => normalizeSearchDigits(r.telefone || ''))
 
     return terms.every((term) => {
       // Direct text match
@@ -69,6 +75,7 @@ export function searchClientes(clientes: Cliente[], search: string, limit = 8): 
       const termDigits = normalizeSearchDigits(term)
       if (termDigits) {
         if (normalizedDoc.includes(termDigits)) return true
+        if (normalizedRg.includes(termDigits)) return true
         if (normalizedPhone1.includes(termDigits)) return true
         if (normalizedPhone2.includes(termDigits)) return true
         if (repPhones.some((p) => p.includes(termDigits))) return true
@@ -84,55 +91,63 @@ export function searchClientes(clientes: Cliente[], search: string, limit = 8): 
     const nomeNorm = normalizeSearchText(cliente.nome)
     const fantasiaNorm = normalizeSearchText(cliente.nomeFantasia || '')
     const docNorm = normalizeSearchDigits(cliente.documento)
+    const rgNorm = normalizeSearchText(cliente.rg || '')
+    const rgDigits = normalizeSearchDigits(cliente.rg || '')
     const queryDigits = normalizeSearchDigits(query)
 
-    // 1. Name starts with query
     if (nomeNorm.startsWith(query)) {
       score += 1000
     }
-    // 2. Document matches exactly
+
     if (queryDigits && docNorm === queryDigits) {
-      score += 800
+      score += 900
+    } else if (queryDigits && docNorm.includes(queryDigits)) {
+      score += 700
     }
-    // 3. Name contains query
-    else if (nomeNorm.includes(query)) {
+
+    if (queryDigits && rgDigits === queryDigits) {
+      score += 650
+    } else if ((queryDigits && rgDigits.includes(queryDigits)) || rgNorm.includes(query)) {
+      score += 650
+    }
+
+    if (nomeNorm.includes(query)) {
       score += 500
     }
-    // 4. Trade name starts with or contains query
+
     if (fantasiaNorm.startsWith(query)) {
-      score += 400
+      score += 380
     } else if (fantasiaNorm.includes(query)) {
-      score += 300
+      score += 350
     }
-    // 5. Document contains query digits or phone contains query digits
+
     if (queryDigits) {
-      if (docNorm.includes(queryDigits)) {
-        score += 200
-      }
       const phone1 = normalizeSearchDigits(cliente.telefonePrincipal || '')
       const phone2 = normalizeSearchDigits(cliente.telefoneAlternativo || '')
       if (phone1.includes(queryDigits) || phone2.includes(queryDigits)) {
-        score += 150
+        score += 250
       }
     }
-    // 6. Representative name or cargo contains query
-    const repMatch = (cliente.representantes || []).some((r) => {
+
+    const repMatch = (cliente.representantes || []).filter((r) => r.ativo).some((r) => {
       const name = normalizeSearchText(r.nome)
       const cargo = normalizeSearchText(r.cargo)
-      return name.includes(query) || cargo.includes(query)
+      const phone = normalizeSearchDigits(r.telefone || '')
+      return name.includes(query) || cargo.includes(query) || Boolean(queryDigits && phone.includes(queryDigits))
     })
     if (repMatch) {
-      score += 100
+      score += 180
     }
-    // 7. Tags or Cidade contains query
+
     const tagsMatch = (cliente.tags || []).some((t) => normalizeSearchText(t).includes(query))
     if (tagsMatch) {
-      score += 50
+      score += 90
     }
+
     const cidadeNorm = normalizeSearchText(cliente.cidade || '')
     const ufNorm = normalizeSearchText(cliente.uf || '')
     if (cidadeNorm.includes(query) || ufNorm.includes(query)) {
-      score += 40
+      score += 60
     }
 
     return { cliente, score }

@@ -1,16 +1,17 @@
 import { Eye, Plus, Save, Trash2, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { saveOrcamento } from '../../data/orcamentoRepository'
 import { DEFAULT_ITEM_ROWS, DEFAULT_VALIDADE_DIAS, MAX_ITEM_ROWS } from '../../lib/constants'
 import { parseLocalizedNumber, formatOrcamentoNumero } from '../../lib/formatters'
 import { calculateGeneralTotal, calculateItemTotal, createInitialItems } from '../../lib/orcamento'
+import { createClienteLinkPatch, createRepresentantePatch } from '../../lib/orcamento-cliente-link'
 import { orcamentoFormSchema } from '../../lib/validations'
 import { useAuthStore } from '../../stores/authStore'
 import { useSystemSettingsStore } from '../../stores/systemSettingsStore'
 import { useClientes } from '../../hooks/useClientes'
-import type { Orcamento, OrcamentoDraft, OrcamentoItem, OrcamentoStatus } from '../../types'
+import type { Cliente, Orcamento, OrcamentoDraft, OrcamentoItem, OrcamentoStatus } from '../../types'
 import { DocumentPreview } from './DocumentPreview'
 import { ClientePicker } from '../cliente/ClientePicker'
 import { RepresentantePicker } from '../cliente/RepresentantePicker'
@@ -75,13 +76,21 @@ export function OrcamentoEditor({ existing }: Props) {
   const profile = useAuthStore((state) => state.profile)
   const settings = useSystemSettingsStore((state) => state.settings)
   const settingsLoaded = useSystemSettingsStore((state) => state.loaded)
-  const { clientes, reload: reloadClientes } = useClientes()
+  const {
+    clientes,
+    loading: clientesLoading,
+    reload: reloadClientes,
+  } = useClientes()
   const [draft, setDraft] = useState<OrcamentoDraft>(() =>
     draftFromExisting(existing, settings.validadePadraoDias, settings.observacoesPadrao),
   )
   const [saving, setSaving] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const total = useMemo(() => calculateGeneralTotal(draft.itens), [draft.itens])
+  const selectedCliente = useMemo(
+    () => clientes.find((cliente) => cliente.id === draft.clienteId) ?? null,
+    [clientes, draft.clienteId],
+  )
   const isDeleted = existing?.status === 'excluido'
 
   useEffect(() => {
@@ -124,59 +133,28 @@ export function OrcamentoEditor({ existing }: Props) {
     itens: draft.itens.map((item) => ({ ...item, valorTotal: calculateItemTotal(item) })),
   }
 
+  const selectCliente = useCallback((cliente: Cliente | null) => {
+    setDraft((current) => ({
+      ...current,
+      ...createClienteLinkPatch(cliente, current.servicoCliente),
+    }))
+  }, [])
+
+  const selectRepresentante = useCallback((representanteId: string | null) => {
+    setDraft((current) => ({
+      ...current,
+      ...createRepresentantePatch(selectedCliente, representanteId),
+    }))
+  }, [selectedCliente])
+
   useEffect(() => {
     const clienteId = searchParams.get('clienteId')
     if (!clienteId || existing || !clientes.length || draft.clienteId) return
     const cliente = clientes.find((item) => item.id === clienteId)
     if (!cliente) return
-    const principal = cliente.representantes.find((representante) => representante.principal && representante.ativo)
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate quotation draft from selected client when entering through quick action
-    setDraft((current) => ({
-      ...current,
-      clienteId: cliente.id,
-      clienteNome: cliente.nome,
-      clienteDocumento: cliente.documento,
-      representanteId: principal?.id ?? null,
-      representanteNome: principal?.nome ?? null,
-      servicoCliente: current.servicoCliente.trim() ? current.servicoCliente : cliente.nome,
-    }))
-  }, [clientes, draft.clienteId, existing, searchParams])
-
-  function selectCliente(clienteId: string | null) {
-    const cliente = clientes.find((item) => item.id === clienteId)
-    if (!cliente) {
-      setDraft((current) => ({
-        ...current,
-        clienteId: null,
-        clienteNome: null,
-        clienteDocumento: null,
-        representanteId: null,
-        representanteNome: null,
-      }))
-      return
-    }
-
-    const principal = cliente.representantes.find((representante) => representante.principal && representante.ativo)
-    setDraft((current) => ({
-      ...current,
-      clienteId: cliente.id,
-      clienteNome: cliente.nome,
-      clienteDocumento: cliente.documento,
-      representanteId: principal?.id ?? null,
-      representanteNome: principal?.nome ?? null,
-      servicoCliente: current.servicoCliente.trim() ? current.servicoCliente : cliente.nome,
-    }))
-  }
-
-  function selectRepresentante(representanteId: string | null) {
-    const cliente = clientes.find((item) => item.id === draft.clienteId)
-    const representante = cliente?.representantes.find((item) => item.id === representanteId)
-    setDraft((current) => ({
-      ...current,
-      representanteId: representante?.id ?? null,
-      representanteNome: representante?.nome ?? null,
-    }))
-  }
+    selectCliente(cliente)
+  }, [clientes, draft.clienteId, existing, searchParams, selectCliente])
 
   function updateItem(index: number, patch: Partial<OrcamentoItem>) {
     setDraft((current) => {
@@ -247,7 +225,17 @@ export function OrcamentoEditor({ existing }: Props) {
               <h2>{existing ? `Editar orçamento ${formatOrcamentoNumero(existing.numero, existing.revisao)}` : 'Novo orçamento'}</h2>
               <p>{existing ? 'O número permanece fixo.' : 'O número oficial será gerado ao salvar.'}</p>
             </div>
-            <strong className="number-pill">{existing ? formatOrcamentoNumero(existing.numero, existing.revisao) : 'Gerado ao salvar'}</strong>
+            <div className="editor-heading-actions">
+              <strong className="number-pill">{existing ? formatOrcamentoNumero(existing.numero, existing.revisao) : 'Gerado ao salvar'}</strong>
+              <button
+                className="secondary-button mobile-only mobile-preview-inline"
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+              >
+                <Eye size={16} />
+                Preview
+              </button>
+            </div>
           </div>
 
           {existing && ['aprovado', 'recusado', 'cancelado'].includes(existing.status) ? (
@@ -264,23 +252,22 @@ export function OrcamentoEditor({ existing }: Props) {
 
           <div className="form-grid">
             <div className="span-2">
-              <label>Cliente cadastrado</label>
+              <label>Cliente vinculado</label>
               <ClientePicker
                 clientes={clientes}
-                selectedClienteId={draft.clienteId ?? null}
-                onSelectCliente={selectCliente}
-                reloadClientes={reloadClientes}
+                selectedCliente={selectedCliente}
+                loading={clientesLoading}
+                onSelect={selectCliente}
+                onRefresh={reloadClientes}
               />
             </div>
-            {clientes.find((c) => c.id === draft.clienteId)?.tipo === 'cnpj' ? (
+            {selectedCliente?.tipo === 'cnpj' ? (
               <RepresentantePicker
-                cliente={clientes.find((c) => c.id === draft.clienteId) || null}
+                cliente={selectedCliente}
                 selectedRepresentanteId={draft.representanteId ?? null}
                 onSelectRepresentante={selectRepresentante}
               />
-            ) : (
-              <div></div>
-            )}
+            ) : null}
             <label>
               Data
               <input
