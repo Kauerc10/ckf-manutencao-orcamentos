@@ -317,6 +317,7 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
         observacoes: input.observacoes,
         validade_dias: input.validadeDias,
         total,
+        criado_por: profile.id,
       })
       .select('id')
       .single()
