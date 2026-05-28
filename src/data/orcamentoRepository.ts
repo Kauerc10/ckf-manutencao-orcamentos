@@ -306,6 +306,10 @@ export async function saveOrcamento(input: SaveInput, profile: Profile): Promise
       return updated
     }
 
+    // NOTE: criado_por is NOT sent — the BEFORE INSERT trigger
+    // (orcamentos_set_criacao_audit) sets it to auth.uid() server-side.
+    // Sending it would cause PostgREST 42501 since it's excluded from
+    // column-level GRANT INSERT by design (defense in depth).
     const { data, error } = await supabase
       .from('orcamentos')
       .insert({
@@ -489,6 +493,7 @@ export async function cloneOrcamentoAsRevision(originalId: string, profile: Prof
   }
 
   if (isSupabaseConfigured && supabase) {
+    // NOTE: criado_por is NOT sent — handled by BEFORE INSERT trigger.
     const { data, error } = await supabase
       .from('orcamentos')
       .insert({
@@ -503,7 +508,6 @@ export async function cloneOrcamentoAsRevision(originalId: string, profile: Prof
         observacoes: input.observacoes,
         validade_dias: input.validadeDias,
         total: input.total,
-        criado_por: profile.id,
       })
       .select('id')
       .single()

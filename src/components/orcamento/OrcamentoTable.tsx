@@ -26,8 +26,8 @@ export function OrcamentoTable({
   if (orcamentos.length === 0) {
     return (
       <div className="empty-state">
-        <strong>Nenhum orcamento encontrado</strong>
-        <span>Ajuste os filtros ou crie um novo orcamento.</span>
+        <strong>Nenhum orçamento encontrado</strong>
+        <span>Ajuste os filtros ou crie um novo orçamento.</span>
       </div>
     )
   }
@@ -37,13 +37,13 @@ export function OrcamentoTable({
       <table className="data-table">
         <thead>
           <tr>
-            <th>No</th>
+            <th>Nº</th>
             <th>Data</th>
-            <th>Cliente/Servico</th>
+            <th>Cliente/Serviço</th>
             <th>Total</th>
             <th>Status</th>
             {!compact ? <th>Criado por</th> : null}
-            <th>Acoes</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -64,7 +64,7 @@ export function OrcamentoTable({
                     {orcamento.clienteNome ? <small>{orcamento.clienteNome}</small> : null}
                     {isDeleted ? (
                       <small className="deleted-audit-line">
-                        Excluido por {orcamento.excluidoPorNome ?? 'admin'}: {orcamento.excluidoMotivo}
+                        Excluído por {orcamento.excluidoPorNome ?? 'admin'}: {orcamento.excluidoMotivo}
                       </small>
                     ) : null}
                   </span>
