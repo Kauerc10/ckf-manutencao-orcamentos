@@ -141,12 +141,13 @@ a {
 }
 
 .brand-header {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: flex-start;
   margin-bottom: 30px;
   min-height: 40px;
+  width: 100%;
 }
 
 .sidebar-collapsed .brand-header {
@@ -163,6 +164,8 @@ a {
 
 .sidebar-collapsed .brand-block {
   width: 32px;
+  height: 32px;
+  justify-content: center;
   overflow: hidden;
 }
 
@@ -172,31 +175,40 @@ a {
   height: auto;
   display: block;
   object-fit: contain;
-  transition: width 0.22s ease, max-width 0.22s ease;
+  transition: width 0.22s ease, height 0.22s ease, max-width 0.22s ease;
 }
 
 .sidebar-collapsed .sidebar-logo {
   width: 32px;
-  max-width: 32px;
+  height: 32px;
+  min-width: 32px;
+  object-fit: cover;
+  object-position: left; /* Crops showing only the gear symbol, hiding the 'CK' text */
 }
 
 .sidebar-toggle-btn {
-  width: 26px;
-  height: 26px;
+  position: absolute;
+  right: -24px; /* Center it precisely on the sidebar's 1px right border (18px padding + offset) */
+  top: 7px;
+  width: 24px;
+  height: 24px;
   display: inline-grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--shell-2);
+  background: var(--shell);
   border: 1px solid var(--line-dark);
   color: #cbd3df;
   cursor: pointer;
-  transition: all 0.15s ease;
+  z-index: 150;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
 }
 
 .sidebar-toggle-btn:hover {
   background: #24272a;
   color: var(--accent);
   border-color: var(--accent);
+  transform: scale(1.08);
 }
 
 .drawer-logo {
