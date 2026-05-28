@@ -1,0 +1,12 @@
+-- Grant INSERT on 'numero' column for revision cloning support.
+-- This allows the frontend to specify the same budget number when
+-- creating a revision (e.g. budget 246-R1, 246-R2, etc).
+--
+-- NOTE: 'criado_por' is intentionally EXCLUDED from INSERT grants.
+-- The BEFORE INSERT trigger (orcamentos_set_criacao_audit) is the
+-- sole source of truth for this field, enforcing auth.uid().
+-- This is a defense-in-depth measure: even if the frontend tried
+-- to forge a different user ID, the trigger would override it.
+-- But PostgREST checks column grants BEFORE triggers fire, so
+-- sending a column not in the GRANT list causes 42501.
+GRANT INSERT (numero) ON TABLE public.orcamentos TO authenticated;
