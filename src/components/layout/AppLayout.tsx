@@ -1,4 +1,4 @@
-import { FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, Users, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, Users, X } from 'lucide-react'
 import { type ReactNode, useCallback, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -17,9 +17,18 @@ export function AppLayout({ children }: Props) {
   const logout = useAuthStore((state) => state.logout)
   const [drawerState, setDrawerState] = useState({ open: false, pathname: location.pathname })
   const drawerOpen = drawerState.open && drawerState.pathname === location.pathname
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
 
   const closeDrawer = useCallback(() => setDrawerState((current) => ({ ...current, open: false })), [])
   const openDrawer = useCallback(() => setDrawerState({ open: true, pathname: location.pathname }), [location.pathname])
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((current) => {
+      const next = !current
+      localStorage.setItem('sidebar-collapsed', String(next))
+      return next
+    })
+  }, [])
 
   async function handleLogout() {
     await logout()
@@ -28,48 +37,63 @@ export function AppLayout({ children }: Props) {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       {/* ── Desktop sidebar (hidden on mobile via CSS) ── */}
       <aside className="sidebar desktop-only">
-        <div className="brand-block">
-          <img className="sidebar-logo" src={BRAND_ASSETS.symbolWhiteAmberPng} alt="CKF Manutenção" />
+        <div className="brand-header">
+          <div className="brand-block">
+            <img className="sidebar-logo" src={BRAND_ASSETS.symbolWhiteAmberPng} alt="CKF Manutenção" />
+          </div>
+          <button
+            className="sidebar-toggle-btn"
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={sidebarCollapsed ? 'Expandir menu' : 'Contrair menu'}
+          >
+            {sidebarCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+          </button>
         </div>
 
         <nav className="sidebar-nav" aria-label="Principal">
-          <NavLink to="/" end>
+          <NavLink to="/" end title="Dashboard">
             <LayoutDashboard size={18} />
-            Dashboard
+            <span>Dashboard</span>
           </NavLink>
-          <NavLink to="/orcamentos/novo">
+          <NavLink to="/orcamentos/novo" title="Novo orçamento">
             <Plus size={18} />
-            Novo orçamento
+            <span>Novo orçamento</span>
           </NavLink>
-          <NavLink to="/clientes">
+          <NavLink to="/clientes" title="Clientes">
             <Users size={18} />
-            Clientes
+            <span>Clientes</span>
           </NavLink>
-          <NavLink to="/historico">
+          <NavLink to="/historico" title="Histórico">
             <FileClock size={18} />
-            Histórico
+            <span>Histórico</span>
           </NavLink>
         </nav>
 
         <div className="sidebar-footer">
           <nav className="sidebar-nav sidebar-nav-secondary" aria-label="Sistema">
-            <NavLink to="/configuracoes">
+            <NavLink to="/configuracoes" title="Configurações">
               <Settings size={18} />
-              Configurações
+              <span>Configurações</span>
             </NavLink>
           </nav>
           <div className="user-card">
-            <strong>{profile?.nome}</strong>
-            <span>{profile?.email}</span>
-            {profile?.role === 'admin' ? <em>Administrador</em> : null}
-            {mode === 'local' ? <em>Modo local sem Supabase</em> : null}
+            <div className="user-avatar" title={`${profile?.nome} (${profile?.email})`}>
+              {profile?.nome ? profile.nome.substring(0, 2).toUpperCase() : 'US'}
+            </div>
+            <div className="user-info">
+              <strong>{profile?.nome}</strong>
+              <span>{profile?.email}</span>
+              {profile?.role === 'admin' ? <em>Administrador</em> : null}
+              {mode === 'local' ? <em>Modo local sem Supabase</em> : null}
+            </div>
           </div>
-          <button className="sidebar-logout" type="button" onClick={handleLogout}>
+          <button className="sidebar-logout" type="button" onClick={handleLogout} title="Sair da conta">
             <LogOut size={17} />
-            Sair
+            <span>Sair</span>
           </button>
         </div>
       </aside>
