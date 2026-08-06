@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { Cliente } from '../types'
-import { createClienteLinkPatch, createRepresentantePatch } from './orcamento-cliente-link'
+import {
+  createClienteLinkPatch,
+  createRepresentantePatch,
+  formatClienteIdentificacao,
+  getClienteDocumentLines,
+} from './orcamento-cliente-link'
 
 const baseCliente: Cliente = {
   id: 'cliente-1',
@@ -54,6 +59,18 @@ const baseCliente: Cliente = {
 }
 
 describe('orcamento cliente link helpers', () => {
+  it('formats client identification with document and location details', () => {
+    expect(formatClienteIdentificacao(baseCliente)).toBe(
+      'Cliente Operacional | CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
+    )
+    expect(formatClienteIdentificacao({ ...baseCliente, tipo: 'cpf', documento: '12345678901', cidade: '', uf: '' })).toBe(
+      'Cliente Operacional | CPF 123.456.789-01',
+    )
+    expect(formatClienteIdentificacao({ ...baseCliente, cidade: '', uf: 'SP' })).toBe(
+      'Cliente Operacional | CNPJ 12.345.678/0001-90 | SP',
+    )
+  })
+
   it('selects a CPF client and clears representative fields', () => {
     const cliente: Cliente = {
       ...baseCliente,
@@ -67,7 +84,7 @@ describe('orcamento cliente link helpers', () => {
       clienteDocumento: '12.345.678/0001-90',
       representanteId: null,
       representanteNome: null,
-      servicoCliente: 'Cliente Operacional',
+      servicoCliente: 'Cliente Operacional | CPF 12.345.678/0001-90 | Sao Paulo/SP',
     })
   })
 
@@ -76,7 +93,7 @@ describe('orcamento cliente link helpers', () => {
       clienteId: 'cliente-1',
       representanteId: 'rep-1',
       representanteNome: 'Ana Principal',
-      servicoCliente: 'Cliente Operacional',
+      servicoCliente: 'Cliente Operacional | CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
     })
   })
 
@@ -91,8 +108,29 @@ describe('orcamento cliente link helpers', () => {
     })
   })
 
-  it('does not overwrite a manually filled service field when switching clients', () => {
-    expect(createClienteLinkPatch(baseCliente, 'Servico ja descrito').servicoCliente).toBe('Servico ja descrito')
+  it('replaces a previous manual client description with the selected client snapshot', () => {
+    expect(createClienteLinkPatch(baseCliente, 'Cliente manual anterior').servicoCliente).toBe(
+      'Cliente Operacional | CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
+    )
+  })
+
+  it('separates the linked client snapshot into name and document details', () => {
+    expect(
+      getClienteDocumentLines({
+        clienteId: 'cliente-1',
+        servicoCliente: 'Cliente Operacional | CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
+      }),
+    ).toEqual({
+      nome: 'Cliente Operacional',
+      detalhes: 'CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
+    })
+  })
+
+  it('keeps a manual client description as the only document line', () => {
+    expect(getClienteDocumentLines({ clienteId: null, servicoCliente: '  Cliente avulso  ' })).toEqual({
+      nome: 'Cliente avulso',
+      detalhes: null,
+    })
   })
 
   it('selects an existing active representative and clears missing ones', () => {
