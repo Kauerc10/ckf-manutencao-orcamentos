@@ -1,4 +1,5 @@
 import type { Cliente } from '../types'
+import { formatClienteDocumento } from './clientes'
 import { getActiveRepresentantes, getPrincipalRepresentante } from './cliente-search'
 
 export type ClienteLinkPatch = {
@@ -13,6 +14,13 @@ export type ClienteLinkPatch = {
 export type RepresentanteLinkPatch = {
   representanteId: string | null
   representanteNome: string | null
+}
+
+export function formatClienteIdentificacao(cliente: Cliente): string {
+  const documento = `${cliente.tipo.toUpperCase()} ${formatClienteDocumento(cliente.documento)}`
+  const localidade = [cliente.cidade, cliente.uf].filter(Boolean).join('/')
+
+  return [cliente.nome, documento, localidade].filter(Boolean).join(' | ')
 }
 
 export function createClienteLinkPatch(

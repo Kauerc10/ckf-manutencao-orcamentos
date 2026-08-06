@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Cliente } from '../types'
-import { createClienteLinkPatch, createRepresentantePatch } from './orcamento-cliente-link'
+import {
+  createClienteLinkPatch,
+  createRepresentantePatch,
+  formatClienteIdentificacao,
+} from './orcamento-cliente-link'
 
 const baseCliente: Cliente = {
   id: 'cliente-1',
@@ -54,6 +58,18 @@ const baseCliente: Cliente = {
 }
 
 describe('orcamento cliente link helpers', () => {
+  it('formats client identification with document and location details', () => {
+    expect(formatClienteIdentificacao(baseCliente)).toBe(
+      'Cliente Operacional | CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
+    )
+    expect(formatClienteIdentificacao({ ...baseCliente, tipo: 'cpf', documento: '12345678901', cidade: '', uf: '' })).toBe(
+      'Cliente Operacional | CPF 123.456.789-01',
+    )
+    expect(formatClienteIdentificacao({ ...baseCliente, cidade: '', uf: 'SP' })).toBe(
+      'Cliente Operacional | CNPJ 12.345.678/0001-90 | SP',
+    )
+  })
+
   it('selects a CPF client and clears representative fields', () => {
     const cliente: Cliente = {
       ...baseCliente,
