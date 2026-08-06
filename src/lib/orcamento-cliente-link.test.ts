@@ -4,6 +4,7 @@ import {
   createClienteLinkPatch,
   createRepresentantePatch,
   formatClienteIdentificacao,
+  getClienteDocumentLines,
 } from './orcamento-cliente-link'
 
 const baseCliente: Cliente = {
@@ -111,6 +112,25 @@ describe('orcamento cliente link helpers', () => {
     expect(createClienteLinkPatch(baseCliente, 'Cliente manual anterior').servicoCliente).toBe(
       'Cliente Operacional | CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
     )
+  })
+
+  it('separates the linked client snapshot into name and document details', () => {
+    expect(
+      getClienteDocumentLines({
+        clienteId: 'cliente-1',
+        servicoCliente: 'Cliente Operacional | CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
+      }),
+    ).toEqual({
+      nome: 'Cliente Operacional',
+      detalhes: 'CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
+    })
+  })
+
+  it('keeps a manual client description as the only document line', () => {
+    expect(getClienteDocumentLines({ clienteId: null, servicoCliente: '  Cliente avulso  ' })).toEqual({
+      nome: 'Cliente avulso',
+      detalhes: null,
+    })
   })
 
   it('selects an existing active representative and clears missing ones', () => {

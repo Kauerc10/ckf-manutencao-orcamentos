@@ -5,6 +5,7 @@ import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/render
 import { BRAND_ASSETS, DEFAULT_SYSTEM_SETTINGS } from '../../lib/constants'
 import { formatCurrency, formatDateBR, formatOrcamentoNumero } from '../../lib/formatters'
 import { normalizeItemsForDocument } from '../../lib/orcamento'
+import { getClienteDocumentLines } from '../../lib/orcamento-cliente-link'
 import type { Orcamento, SystemSettings } from '../../types'
 
 const styles = StyleSheet.create({
@@ -84,6 +85,11 @@ const styles = StyleSheet.create({
   observations: {
     minHeight: 42,
   },
+  clientDetails: {
+    fontSize: 8,
+    color: '#3F4854',
+    marginTop: 2,
+  },
   validity: {
     textAlign: 'center',
     fontWeight: 700,
@@ -124,6 +130,7 @@ class SafeLogoImage extends React.Component<
 
 export function OrcamentoPDF({ orcamento, settings = DEFAULT_SYSTEM_SETTINGS }: Props) {
   const rows = normalizeItemsForDocument(orcamento.itens)
+  const cliente = getClienteDocumentLines(orcamento)
 
   return (
     <Document title={`Orçamento ${formatOrcamentoNumero(orcamento.numero)}`}>
@@ -161,10 +168,11 @@ export function OrcamentoPDF({ orcamento, settings = DEFAULT_SYSTEM_SETTINGS }: 
 
         <View style={styles.row}>
           <View style={[styles.cell, { width: '18%' }]}>
-            <Text style={styles.label}>Serviço:</Text>
+            <Text style={styles.label}>Cliente:</Text>
           </View>
           <View style={[styles.cell, { width: '82%' }]}>
-            <Text>{orcamento.servicoCliente}</Text>
+            <Text>{cliente.nome || 'Cliente / Serviço'}</Text>
+            {cliente.detalhes ? <Text style={styles.clientDetails}>{cliente.detalhes}</Text> : null}
           </View>
         </View>
 

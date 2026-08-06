@@ -1,4 +1,4 @@
-import type { Cliente } from '../types'
+import type { Cliente, Orcamento } from '../types'
 import { formatClienteDocumento } from './clientes'
 import { getActiveRepresentantes, getPrincipalRepresentante } from './cliente-search'
 
@@ -21,6 +21,24 @@ export function formatClienteIdentificacao(cliente: Cliente): string {
   const localidade = [cliente.cidade, cliente.uf].filter(Boolean).join('/')
 
   return [cliente.nome, documento, localidade].filter(Boolean).join(' | ')
+}
+
+export function getClienteDocumentLines(
+  orcamento: Pick<Orcamento, 'clienteId' | 'servicoCliente'>,
+): { nome: string; detalhes: string | null } {
+  const fotoCliente = orcamento.servicoCliente.trim()
+
+  if (!orcamento.clienteId) {
+    return { nome: fotoCliente, detalhes: null }
+  }
+
+  const identificacao = fotoCliente.match(/^(.+?) \| ((?:CPF|CNPJ) .+)$/)
+
+  if (!identificacao) {
+    return { nome: fotoCliente, detalhes: null }
+  }
+
+  return { nome: identificacao[1], detalhes: identificacao[2] }
 }
 
 export function createClienteLinkPatch(

@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { BRAND_ASSETS, DOCUMENT_ITEM_ROW_COUNT } from '../../lib/constants'
 import { formatCurrency, formatDateBR, formatOrcamentoNumero } from '../../lib/formatters'
 import { normalizeItemsForDocument } from '../../lib/orcamento'
+import { getClienteDocumentLines } from '../../lib/orcamento-cliente-link'
 import { useSystemSettingsStore } from '../../stores/systemSettingsStore'
 import type { Orcamento, SystemSettings } from '../../types'
 
@@ -15,6 +16,7 @@ export function DocumentPreview({ orcamento, compact = false, settingsOverride }
   const storedSettings = useSystemSettingsStore((state) => state.settings)
   const settings = settingsOverride ?? storedSettings
   const rows = normalizeItemsForDocument(orcamento.itens)
+  const cliente = getClienteDocumentLines(orcamento)
   const classes = [
     'document-preview',
     compact ? 'compact' : '',
@@ -47,8 +49,11 @@ export function DocumentPreview({ orcamento, compact = false, settingsOverride }
       </div>
 
       <div className="document-service">
-        <span>Serviço:</span>
-        <strong>{orcamento.servicoCliente || 'Cliente / Serviço'}</strong>
+        <span>Cliente:</span>
+        <div className="document-client-content">
+          <strong>{cliente.nome || 'Cliente / Serviço'}</strong>
+          {cliente.detalhes ? <small>{cliente.detalhes}</small> : null}
+        </div>
       </div>
 
       <div className="document-table" style={{ '--document-rows': DOCUMENT_ITEM_ROW_COUNT } as CSSProperties}>

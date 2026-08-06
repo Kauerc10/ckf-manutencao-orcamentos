@@ -1100,7 +1100,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .document-preview.compact .document-meta span,
 .document-preview.compact .document-meta strong,
 .document-preview.compact .document-service span,
-.document-preview.compact .document-service strong {
+.document-preview.compact .document-client-content {
   min-height: 20px;
   padding: 4px 6px;
   font-size: 9px;
@@ -1189,11 +1189,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .document-meta span,
 .document-meta strong,
-.document-service span,
-.document-service strong {
+.document-service span {
   min-height: 32px;
   display: flex;
   align-items: center;
+  border-right: 1px solid #111;
+  border-bottom: 1px solid #111;
+  padding: 6px 8px;
+}
+
+.document-client-content {
+  min-height: 32px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
   border-right: 1px solid #111;
   border-bottom: 1px solid #111;
   padding: 6px 8px;
