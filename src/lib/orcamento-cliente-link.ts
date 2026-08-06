@@ -46,7 +46,7 @@ export function createClienteLinkPatch(
     clienteDocumento: cliente.documento,
     representanteId: principal?.id ?? null,
     representanteNome: principal?.nome ?? null,
-    servicoCliente: currentServicoCliente.trim() ? currentServicoCliente : cliente.nome,
+    servicoCliente: formatClienteIdentificacao(cliente),
   }
 }
 

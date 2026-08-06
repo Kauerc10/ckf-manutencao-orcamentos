@@ -22,7 +22,7 @@ export const orcamentoItemSchema = z.object({
 export const orcamentoFormSchema = z
   .object({
     dataOrcamento: z.string().min(1, 'Informe a data do orçamento.'),
-    servicoCliente: z.string().trim().min(2, 'Informe o serviço ou cliente.'),
+    servicoCliente: z.string().trim().min(2, 'Informe o cliente.'),
     clienteId: z.string().nullable().optional(),
     clienteNome: z.string().nullable().optional(),
     clienteDocumento: z.string().nullable().optional(),

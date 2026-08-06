@@ -16,10 +16,10 @@ describe('orcamento validation', () => {
     expect(result.success).toBe(true)
   })
 
-  it('rejects empty service/client and quotations without valued items', () => {
+  it('rejects a client name shorter than two characters and quotations without valued items', () => {
     const result = orcamentoFormSchema.safeParse({
       dataOrcamento: '2026-05-16',
-      servicoCliente: '',
+      servicoCliente: 'x',
       status: 'rascunho',
       validadeDias: 0,
       observacoes: '',
@@ -28,6 +28,7 @@ describe('orcamento validation', () => {
 
     expect(result.success).toBe(false)
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('servicoCliente')
+    expect(result.error?.issues.find((issue) => issue.path.join('.') === 'servicoCliente')?.message).toBe('Informe o cliente.')
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('validadeDias')
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('itens')
   })

@@ -83,7 +83,7 @@ describe('orcamento cliente link helpers', () => {
       clienteDocumento: '12.345.678/0001-90',
       representanteId: null,
       representanteNome: null,
-      servicoCliente: 'Cliente Operacional',
+      servicoCliente: 'Cliente Operacional | CPF 12.345.678/0001-90 | Sao Paulo/SP',
     })
   })
 
@@ -92,7 +92,7 @@ describe('orcamento cliente link helpers', () => {
       clienteId: 'cliente-1',
       representanteId: 'rep-1',
       representanteNome: 'Ana Principal',
-      servicoCliente: 'Cliente Operacional',
+      servicoCliente: 'Cliente Operacional | CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
     })
   })
 
@@ -107,8 +107,10 @@ describe('orcamento cliente link helpers', () => {
     })
   })
 
-  it('does not overwrite a manually filled service field when switching clients', () => {
-    expect(createClienteLinkPatch(baseCliente, 'Servico ja descrito').servicoCliente).toBe('Servico ja descrito')
+  it('replaces a previous manual client description with the selected client snapshot', () => {
+    expect(createClienteLinkPatch(baseCliente, 'Cliente manual anterior').servicoCliente).toBe(
+      'Cliente Operacional | CNPJ 12.345.678/0001-90 | Sao Paulo/SP',
+    )
   })
 
   it('selects an existing active representative and clears missing ones', () => {

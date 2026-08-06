@@ -277,11 +277,12 @@ export function OrcamentoEditor({ existing }: Props) {
               />
             </label>
             <label className="span-2">
-              Serviço/Cliente
+              {selectedCliente ? 'Cliente no orçamento' : 'Cliente não cadastrado'}
               <input
                 value={draft.servicoCliente}
                 onChange={(event) => setDraft({ ...draft, servicoCliente: event.target.value })}
-                placeholder="Ex.: Filial São José"
+                placeholder="Informe o nome do cliente"
+                readOnly={Boolean(selectedCliente)}
               />
             </label>
             <label>
