@@ -145,6 +145,7 @@
 - Modify: `src/lib/orcamento-cliente-link.test.ts`
 - Modify: `src/components/orcamento/DocumentPreview.tsx`
 - Modify: `src/components/pdf/OrcamentoPDF.tsx`
+- Modify: `src/index.css`
 
 **Interfaces:**
 - Consumes: a foto em `servicoCliente` criada na Task 2.
@@ -197,10 +198,14 @@
 
   <div className="document-service">
     <span>Cliente:</span>
-    <strong>{cliente.nome || 'Cliente nao informado'}</strong>
-    {cliente.detalhes ? <small>{cliente.detalhes}</small> : null}
+    <div className="document-client-content">
+      <strong>{cliente.nome || 'Cliente nao informado'}</strong>
+      {cliente.detalhes ? <small>{cliente.detalhes}</small> : null}
+    </div>
   </div>
   ```
+
+  Em `src/index.css`, usar `.document-client-content` como a celula direita do grid, mantendo o rotulo em uma coluna e as duas linhas dentro da outra. Ela deve receber as mesmas bordas e padding que a antiga regra de `.document-service strong`; no modo compacto, aplicar `min-height: 20px`, `padding: 4px 6px` e `font-size: 9px`. Definir `display: grid`, `align-content: center` e `gap: 2px` para que o complemento nao crie uma terceira coluna no documento.
 
   No PDF, importar o mesmo helper e renderizar `Cliente:` na primeira celula, com um `View` de duas linhas na segunda. Adicionar o estilo local e o conteudo abaixo:
 
@@ -226,7 +231,7 @@
 - [ ] **Step 5: Commitar a unidade testada**
 
   ```bash
-  git add src/components/orcamento/DocumentPreview.tsx src/components/pdf/OrcamentoPDF.tsx src/lib/orcamento-cliente-link.ts src/lib/orcamento-cliente-link.test.ts
+  git add src/components/orcamento/DocumentPreview.tsx src/components/pdf/OrcamentoPDF.tsx src/index.css src/lib/orcamento-cliente-link.ts src/lib/orcamento-cliente-link.test.ts
   git commit -m "feat: exibir cliente completo nos documentos"
   ```
 
