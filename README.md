@@ -1,399 +1,100 @@
-# CKF Manutenção - Sistema de Orçamentos
+# CKF Manutenção — Sistema de Orçamentos
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-V1%20Funcional-22C55E?style=for-the-badge" alt="Status do Projeto" />
-  <img src="https://img.shields.io/badge/Licença-Uso%20de%20Portfólio-111827?style=for-the-badge" alt="Licença" />
-  <img src="https://img.shields.io/badge/Projeto-Sistema%20Interno-F59E0B?style=for-the-badge" alt="Sistema Interno" />
+  Sistema interno para criar, consultar e emitir orçamentos da CKF Manutenção.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
-  <img src="https://img.shields.io/badge/TypeScript-0F172A?style=for-the-badge&logo=typescript&logoColor=3178C6" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Vite-1E1E2E?style=for-the-badge&logo=vite&logoColor=FFD62E" alt="Vite" />
-  <img src="https://img.shields.io/badge/Supabase-111827?style=for-the-badge&logo=supabase&logoColor=3ECF8E" alt="Supabase" />
-  <img src="https://img.shields.io/badge/Tailwind%20CSS-0F172A?style=for-the-badge&logo=tailwindcss&logoColor=38BDF8" alt="Tailwind CSS" />
+  <a href="https://github.com/Kauerc10/ckf-manutencao-orcamentos/actions/workflows/ci.yml"><img src="https://github.com/Kauerc10/ckf-manutencao-orcamentos/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Kauerc10/ckf-manutencao-orcamentos/actions/workflows/security.yml"><img src="https://github.com/Kauerc10/ckf-manutencao-orcamentos/actions/workflows/security.yml/badge.svg" alt="Segurança"></a>
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19">
+  <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Supabase-2-3ECF8E?logo=supabase&logoColor=white" alt="Supabase">
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white" alt="Vite 8">
 </p>
 
-<p align="center">
-  Sistema web para criação, organização, consulta e exportação de orçamentos da <strong>CKF Manutenção</strong>.
-</p>
+## O que já está no sistema
 
-<p align="center">
-  <strong>React</strong> · <strong>TypeScript</strong> · <strong>Vite</strong> · <strong>Supabase</strong> · <strong>Tailwind CSS</strong> · <strong>CSV/XLSX Export</strong>
-</p>
-
----
+- Login e controle de acesso integrados ao Supabase.
+- Cadastro, busca, edição e detalhamento de clientes e representantes.
+- Criação, edição, consulta, duplicação, filtragem e exclusão de orçamentos.
+- Identificação de cliente cadastrada ou preenchida manualmente, preservada no documento como snapshot.
+- Geração de PDF comercial e exportação de histórico em CSV e XLSX.
+- Status, histórico operacional, configurações institucionais e layout administrativo responsivo.
+- Exclusão protegida por Edge Function, aprovação administrativa e trilha de auditoria.
 
 ## Ecossistema CKF
 
-Este projeto faz parte de um conjunto de repositórios com responsabilidades separadas:
-
 | Repositório | Responsabilidade |
 | --- | --- |
-| [CKF Design](https://github.com/Kauerc10/ckf-design) | Fonte oficial da marca, dos assets e das entregas de design |
-| [Site Institucional](https://github.com/Kauerc10/ckf-site-institucional) | Presença pública, apresentação dos serviços e captação de contatos |
+| [CKF Design](https://github.com/Kauerc10/ckf-design) | Marca, assets e entregas visuais aprovadas |
+| [Site Institucional](https://github.com/Kauerc10/ckf-site-institucional) | Presença pública e captação de contatos |
 | **[Sistema de Orçamentos](https://github.com/Kauerc10/ckf-manutencao-orcamentos)** | Operação interna, clientes, orçamentos e documentos comerciais |
 
-Os assets visuais usados no sistema devem vir de uma entrega aprovada no repositório de design. Alterações na identidade da marca são versionadas primeiro na fonte oficial e depois aplicadas aqui por pull request.
+Os assets visuais devem ser originados no repositório de design e aplicados aqui por pull request.
 
----
+## Stack
 
-## Documentação e suporte
+React 19, TypeScript 6, Vite 8, Tailwind CSS 4, Supabase, Vitest, React PDF e ExcelJS.
 
-- [Guia técnico](docs/REPOSITORY_GUIDE.md) — estrutura, Supabase, migrações, testes e exportações.
-- [Como contribuir](CONTRIBUTING.md) — fluxo de branches, pull requests e validações obrigatórias.
-- [Código de conduta](CODE_OF_CONDUCT.md) — regras de colaboração.
-- [Segurança](SECURITY.md) — reporte responsável e cuidados com dados e autorização.
-- [Suporte](SUPPORT.md) — como pedir ajuda sem expor dados de clientes.
-- [Licença](LICENSE.md) — termos de uso de portfólio e da marca.
+## Executar localmente
 
----
-
-## Sobre o Projeto
-
-O **CKF Manutenção - Sistema de Orçamentos** é uma aplicação web administrativa desenvolvida para auxiliar na criação, gestão, consulta e exportação de orçamentos de serviços de manutenção mecânica.
-
-O projeto nasceu com o objetivo de transformar um processo operacional que poderia ser manual e descentralizado em uma solução mais organizada, padronizada e profissional.
-
-A aplicação possui uma interface interna com navegação lateral, tela de histórico, filtros, ações de exportação e estrutura preparada para evolução futura, incluindo geração de documentos comerciais em PDF e melhorias no fluxo de gestão de clientes e serviços.
-
----
-
-## Contexto da Marca
-
-A **CKF Manutenção** atua com manutenção mecânica em Blumenau/SC e região.
-
-Dados institucionais utilizados no contexto do sistema:
-
-```txt
-CKF MANUTENÇÃO
-Email: CK.manutencaoblu@gmail.com
-CNPJ: 57.461.028/0001-43
-Telefone: (47) 99261-4114
-BLUMENAU E REGIÃO
-```
-
-A identidade visual do sistema foi construída para transmitir:
-
-- Confiança.
-- Robustez.
-- Organização.
-- Precisão técnica.
-- Clareza operacional.
-- Profissionalismo.
-- Segurança visual.
-- Atendimento local confiável.
-
----
-
-## Objetivo
-
-O objetivo principal do projeto é oferecer uma ferramenta interna para que a CKF Manutenção consiga controlar seus orçamentos de forma mais eficiente, clara e profissional.
-
-A proposta envolve:
-
-- Reduzir dependência de processos manuais.
-- Padronizar a criação e consulta de orçamentos.
-- Facilitar a busca por registros anteriores.
-- Permitir exportação de dados.
-- Melhorar a apresentação comercial da empresa.
-- Criar uma base técnica preparada para futuras automações.
-
----
-
-## Funcionalidades
-
-- Criação de novos orçamentos.
-- Listagem e histórico de orçamentos.
-- Busca por número, cliente ou serviço.
-- Filtros por status.
-- Filtros por data inicial e data final.
-- Filtro por usuário criador.
-- Exportação da listagem em CSV.
-- Exportação da listagem em XLSX.
-- Interface administrativa com navegação lateral.
-- Layout alinhado à identidade visual da CKF Manutenção.
-- Integração com Supabase.
-- Estrutura preparada para geração futura de PDF.
-- Organização pensada para manutenção e evolução do sistema.
-
----
-
-## Principais Telas
-
-### Dashboard
-
-Área inicial do sistema, preparada para centralizar indicadores, atalhos e informações gerais sobre os orçamentos.
-
-### Novo Orçamento
-
-Fluxo destinado à criação de novos registros de orçamento, com estrutura preparada para evolução do cadastro de cliente, itens, serviços e valores.
-
-### Histórico
-
-Tela de consulta dos orçamentos cadastrados, com filtros, paginação e ações de exportação.
-
-### Exportação
-
-Estrutura voltada à exportação de dados em formatos úteis para controle administrativo, como CSV e XLSX.
-
----
-
-## Tecnologias Utilizadas
-
-| Tecnologia | Uso no Projeto |
-|---|---|
-| React | Construção da interface |
-| TypeScript | Tipagem e maior segurança no desenvolvimento |
-| Vite | Ambiente de desenvolvimento e build |
-| Supabase | Backend, banco de dados e autenticação |
-| Tailwind CSS | Estilização da interface |
-| HTML5 | Estrutura da aplicação |
-| CSS3 | Complemento visual e responsividade |
-| CSV/XLSX | Exportação de dados |
-
----
-
-## Identidade Visual
-
-A interface foi construída com uma estética escura, técnica e industrial, buscando se aproximar do universo visual de manutenção mecânica, operação e serviços técnicos.
-
-Principais decisões visuais:
-
-- Base escura.
-- Alto contraste.
-- Cards organizados.
-- Botões de ação destacados.
-- Navegação lateral fixa.
-- Tipografia limpa.
-- Layout administrativo direto.
-- Cores sólidas e profissionais.
-- Visual coerente com uma empresa técnica local.
-
----
-
-## Arquitetura e Organização
-
-Estrutura geral do projeto:
-
-```txt
-CKF/
-├── public/
-├── src/
-├── supabase/
-├── .env.example
-├── .gitignore
-├── DESIGN.md
-├── PRODUCT.md
-├── README.md
-├── package.json
-├── package-lock.json
-├── tsconfig.json
-├── tsconfig.app.json
-├── eslint.config.js
-└── index.html
-```
-
----
-
-## Como Rodar Localmente
-
-Clone o repositório:
+Requer Node.js 24.
 
 ```bash
 git clone https://github.com/Kauerc10/ckf-manutencao-orcamentos.git
-```
-
-Acesse a pasta do projeto:
-
-```bash
 cd ckf-manutencao-orcamentos
-```
-
-Instale as dependências:
-
-```bash
-npm install
-```
-
-Crie o arquivo de variáveis de ambiente:
-
-```bash
-cp .env.example .env.local
-```
-
-Configure as variáveis necessárias no arquivo `.env.local`.
-
-Execute o projeto em ambiente de desenvolvimento:
-
-```bash
+npm ci
+Copy-Item .env.example .env.local
 npm run dev
 ```
 
----
+Em macOS ou Linux, use `cp .env.example .env.local` no lugar de `Copy-Item`.
 
-## Variáveis de Ambiente
-
-Crie um arquivo `.env.local` com base no arquivo `.env.example`.
-
-Exemplo:
+Preencha apenas as variáveis públicas do Supabase em `.env.local`:
 
 ```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_sua_chave
 ```
 
-> Nunca publique arquivos `.env`, `.env.local`, `.env.production` ou qualquer arquivo contendo credenciais reais.
-> Chaves secretas, service role keys e URLs diretas de banco devem ficar apenas em ambientes server-side/Edge Functions do Supabase. O frontend deve usar somente a publishable key com RLS habilitado.
+Nunca versione chaves secretas, service role keys ou arquivos `.env`.
 
----
-
-## Scripts Disponíveis
-
-Executa o projeto em ambiente de desenvolvimento:
+## Qualidade e automação
 
 ```bash
-npm run dev
-```
-
-Gera a build de produção:
-
-```bash
+npm run lint
+npm test
 npm run build
 ```
 
-Executa uma prévia local da build de produção:
+O CI executa lint, testes e build em cada pull request e alteração na `main`. O workflow de segurança procura segredos versionados. O Dependabot propõe atualizações mensais, agrupando dependências de produção e desenvolvimento.
 
-```bash
-npm run preview
+## Estrutura
+
+```text
+src/pages/        Telas de login, clientes, orçamentos e configurações
+src/components/   Formulários, listagens, diálogos, layout e prévia de documentos
+src/data/         Repositórios de dados e configurações
+src/lib/          Regras, validações, exportações e integração Supabase
+src/stores/       Estado de autenticação e configurações
+supabase/         Migrações e Edge Function de exclusão protegida
 ```
 
----
+## Banco, autorização e documentos
 
-## Segurança e Boas Práticas
+As migrações em [supabase/migrations](supabase/migrations) versionam schema, permissões, auditoria e regras de acesso. A segurança não depende de esconder ações na interface: RLS, RPCs e a Edge Function validam o acesso no Supabase.
 
-Este projeto utiliza arquivos de ambiente para proteger informações sensíveis.
+Os PDFs e planilhas reproduzem os dados do orçamento. A identidade do cliente usada no momento da emissão é preservada para manter a consistência do documento, mesmo quando não houver um cliente cadastrado vinculado.
 
-Arquivos que não devem ser versionados:
+## Screenshots
 
-```txt
-.env
-.env.local
-.env.production
-.env.development
-node_modules/
-dist/
-*.log
-```
+As capturas reais do sistema serão adicionadas em [docs/screenshots](docs/screenshots) assim que estiverem disponíveis. O diretório já está reservado para dashboard, clientes, histórico e editor de orçamento.
 
-O arquivo `.env.example` pode ser versionado, desde que contenha apenas chaves vazias ou exemplos sem dados reais.
+## Documentação
 
----
-
-## Preview
-
-> Adicione aqui imagens do sistema para valorizar o repositório visualmente.
-
-Sugestão de estrutura:
-
-```txt
-docs/screenshots/dashboard.png
-docs/screenshots/historico.png
-docs/screenshots/novo-orcamento.png
-```
-
-Exemplo de uso no README:
-
-```md
-![Tela de histórico de orçamentos](docs/screenshots/historico.png)
-```
-
----
-
-## Status do Projeto
-
-<p>
-  <img src="https://img.shields.io/badge/Versão-V1%20Funcional-22C55E?style=flat-square" alt="Versão" />
-  <img src="https://img.shields.io/badge/Estado-Em%20evolução-F59E0B?style=flat-square" alt="Estado" />
-</p>
-
-A versão inicial funcional foi concluída com foco em estrutura, interface administrativa, histórico, filtros e exportação de dados.
-
----
-
-## Melhorias Futuras
-
-- Geração completa de orçamento em PDF.
-- Modelo visual personalizado para PDF.
-- Cadastro completo de clientes.
-- Cadastro de serviços recorrentes.
-- Cadastro de equipamentos.
-- Dashboard com indicadores comerciais.
-- Controle mais detalhado de status dos orçamentos.
-- Autenticação e permissões por usuário.
-- Histórico de alterações.
-- Templates comerciais personalizados.
-- Melhorias de responsividade.
-- Melhorias no design final da identidade CKF.
-- Exportação aprimorada para documentos comerciais.
-- Organização de permissões por perfil de usuário.
-
----
-
-## Aprendizados Aplicados
-
-Durante o desenvolvimento deste projeto, foram aplicados conceitos de:
-
-- Estruturação de aplicações React.
-- Uso de TypeScript em sistemas administrativos.
-- Integração com Supabase.
-- Organização de componentes.
-- Criação de filtros e listagens.
-- Exportação de dados.
-- Design de interface para sistema interno.
-- Padronização visual para uma marca real.
-- Organização de projeto para portfólio técnico.
-- Pensamento de produto aplicado a uma necessidade real.
-
----
-
-## Diferenciais do Projeto
-
-Este projeto se destaca por não ser apenas uma aplicação genérica de estudo.
-
-Ele foi desenvolvido com base em um contexto real de negócio, envolvendo:
-
-- Marca real.
-- Dados institucionais reais.
-- Necessidade operacional real.
-- Interface administrativa personalizada.
-- Fluxo pensado para uso interno.
-- Potencial de evolução para documentos comerciais.
-- Aplicação prática de tecnologia em um processo empresarial.
-
----
-
-## Autor
-
-Desenvolvido por **Kauê Ruon Cardoso**.
-
-<p>
-  <a href="https://github.com/Kauerc10">
-    <img src="https://img.shields.io/badge/GitHub-Kauerc10-111827?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Kauerc10" />
-  </a>
-  <a href="mailto:kaue.ruon@gmail.com">
-    <img src="https://img.shields.io/badge/Email-kaue.ruon%40gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white" alt="Email Kauê Ruon" />
-  </a>
-</p>
-
----
-
-## Licença
-
-Este projeto é disponibilizado publicamente apenas para fins de portfólio, demonstração técnica e avaliação profissional.
-
-Consulte o arquivo [LICENSE.md](LICENSE.md) para mais informações.
-
-<p>
-  <img src="https://img.shields.io/badge/Licença-Uso%20de%20Portfólio-111827?style=for-the-badge" alt="Licença de Uso para Portfólio" />
-</p>
+- [Guia técnico](docs/REPOSITORY_GUIDE.md)
+- [Como contribuir](CONTRIBUTING.md)
+- [Segurança](SECURITY.md)
+- [Suporte](SUPPORT.md)
+- [Licença](LICENSE.md)
