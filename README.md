@@ -89,7 +89,19 @@ Os PDFs e planilhas reproduzem os dados do orçamento. A identidade do cliente u
 
 ## Screenshots
 
-As capturas reais do sistema serão adicionadas em [docs/screenshots](docs/screenshots) assim que estiverem disponíveis. O diretório já está reservado para dashboard, clientes, histórico e editor de orçamento.
+As capturas abaixo mostram fluxos reais do sistema. Dados pessoais, contatos, documentos, valores e registros comerciais foram anonimizados antes de serem versionados.
+
+| Dashboard e acompanhamento | Edição com prévia do documento |
+| --- | --- |
+| <img src="docs/screenshots/dashboard-orcamentos.png" alt="Dashboard de orçamentos com dados anonimizados" width="560"> | <img src="docs/screenshots/editor-orcamento.png" alt="Editor de orçamento com dados anonimizados" width="560"> |
+
+| Novo orçamento com cliente vinculado | Base de clientes |
+| --- | --- |
+| <img src="docs/screenshots/novo-orcamento-cliente.png" alt="Novo orçamento com cliente vinculado e dados anonimizados" width="560"> | <img src="docs/screenshots/clientes.png" alt="Listagem de clientes com dados anonimizados" width="560"> |
+
+| Cadastro de pessoa jurídica | Cadastro de pessoa física |
+| --- | --- |
+| <img src="docs/screenshots/novo-cliente-pj.png" alt="Formulário de novo cliente pessoa jurídica" width="560"> | <img src="docs/screenshots/novo-cliente-pf.png" alt="Formulário de novo cliente pessoa física" width="560"> |
 
 ## Documentação
 
