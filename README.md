@@ -38,6 +38,17 @@ Os assets visuais usados no sistema devem vir de uma entrega aprovada no reposit
 
 ---
 
+## Documentação e suporte
+
+- [Guia técnico](docs/REPOSITORY_GUIDE.md) — estrutura, Supabase, migrações, testes e exportações.
+- [Como contribuir](CONTRIBUTING.md) — fluxo de branches, pull requests e validações obrigatórias.
+- [Código de conduta](CODE_OF_CONDUCT.md) — regras de colaboração.
+- [Segurança](SECURITY.md) — reporte responsável e cuidados com dados e autorização.
+- [Suporte](SUPPORT.md) — como pedir ajuda sem expor dados de clientes.
+- [Licença](LICENSE.md) — termos de uso de portfólio e da marca.
+
+---
+
 ## Sobre o Projeto
 
 O **CKF Manutenção - Sistema de Orçamentos** é uma aplicação web administrativa desenvolvida para auxiliar na criação, gestão, consulta e exportação de orçamentos de serviços de manutenção mecânica.
