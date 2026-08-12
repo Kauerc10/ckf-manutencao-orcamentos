@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Suporte e orientações
+    url: https://github.com/Kauerc10/ckf-manutencao-orcamentos/blob/main/SUPPORT.md
+    about: Veja como pedir ajuda sem compartilhar dados sensíveis.
+  - name: Reportar segurança
+    url: https://github.com/Kauerc10/ckf-manutencao-orcamentos/blob/main/SECURITY.md
+    about: Não publique falhas, credenciais ou dados de clientes.
