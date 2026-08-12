@@ -24,6 +24,20 @@
 
 ---
 
+## Ecossistema CKF
+
+Este projeto faz parte de um conjunto de repositórios com responsabilidades separadas:
+
+| Repositório | Responsabilidade |
+| --- | --- |
+| [CKF Design](https://github.com/Kauerc10/ckf-design) | Fonte oficial da marca, dos assets e das entregas de design |
+| [Site Institucional](https://github.com/Kauerc10/ckf-site-institucional) | Presença pública, apresentação dos serviços e captação de contatos |
+| **[Sistema de Orçamentos](https://github.com/Kauerc10/ckf-manutencao-orcamentos)** | Operação interna, clientes, orçamentos e documentos comerciais |
+
+Os assets visuais usados no sistema devem vir de uma entrega aprovada no repositório de design. Alterações na identidade da marca são versionadas primeiro na fonte oficial e depois aplicadas aqui por pull request.
+
+---
+
 ## Sobre o Projeto
 
 O **CKF Manutenção - Sistema de Orçamentos** é uma aplicação web administrativa desenvolvida para auxiliar na criação, gestão, consulta e exportação de orçamentos de serviços de manutenção mecânica.
