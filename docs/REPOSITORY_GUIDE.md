@@ -49,6 +49,10 @@ Para exclusão, a edge function valida a sessão solicitante, autentica a aprova
 
 O sistema gera documentos comerciais em PDF e exportações XLSX/CSV. A identificação usada em um orçamento pode preservar um snapshot textual do cliente para manter consistência documental, inclusive quando não há um cliente cadastrado vinculado.
 
+## Automação
+
+O workflow `CI` usa Node.js 24 e executa `npm ci`, lint, testes e build. O workflow `Segurança` procura segredos no histórico do repositório. O Dependabot mantém dependências npm sob revisão mensal, agrupadas por tipo.
+
 ## Marca e repositórios relacionados
 
 As diretrizes e assets oficiais ficam em [CKF Design](https://github.com/Kauerc10/ckf-design). O site institucional fica em [CKF Site Institucional](https://github.com/Kauerc10/ckf-site-institucional). Alterações de marca devem ser originadas no repositório de design e aplicadas aqui por pull request.
