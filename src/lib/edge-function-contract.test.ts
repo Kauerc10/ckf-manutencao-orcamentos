@@ -30,3 +30,16 @@ describe('admin-delete-orcamento edge function contract', () => {
     expect(source).not.toContain("supabase.rpc('request_orcamento_deletion'")
   })
 })
+
+describe('database deletion approval contract', () => {
+  it('binds the requester to their JWT and records denied and failed attempts', () => {
+    const source = readFileSync(rpcMigrationPath, 'utf8')
+
+    expect(source).toContain('v_requester_id uuid := auth.uid()')
+    expect(source).toContain("action = 'delete_denied'")
+    expect(source).toContain("action = 'delete_failed'")
+    expect(source).toContain('v_request.actor_id')
+    expect(source).not.toContain('p_requester_id')
+    expect(source).toContain("notify pgrst, 'reload schema'")
+  })
+})
