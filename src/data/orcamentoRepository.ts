@@ -400,11 +400,25 @@ export async function deleteOrcamento(input: DeleteInput, profile: Profile): Pro
     assertEditable(existing)
 
     const identifier = input.adminIdentifier.trim()
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase não configurado para aprovar a exclusão.')
+    }
+
+    const { data: requestId, error: requestError } = await supabase.rpc('request_orcamento_deletion', {
+      p_orcamento_id: input.id,
+      p_motivo: motivo,
+      p_admin_identifier: identifier,
+    })
+    if (requestError || !requestId) {
+      throw new Error(requestError?.message || 'Não foi possível registrar a solicitação de exclusão.')
+    }
+
     const adminEmail = identifier.includes('@')
       ? identifier
       : (await supabase.rpc('get_email_by_username', { p_username: identifier })).data
 
-    if (!adminEmail || !supabaseUrl || !supabaseKey) {
+    if (!adminEmail) {
+      await supabase.rpc('deny_orcamento_deletion', { p_request_id: requestId })
       throw new Error('Credenciais de administrador inválidas.')
     }
 
@@ -417,15 +431,22 @@ export async function deleteOrcamento(input: DeleteInput, profile: Profile): Pro
       email: String(adminEmail),
       password: input.adminPassword,
     })
-    if (signInError) throw new Error('Credenciais de administrador inválidas.')
+    if (signInError) {
+      await supabase.rpc('deny_orcamento_deletion', { p_request_id: requestId })
+      throw new Error('Credenciais de administrador inválidas.')
+    }
 
-    const { error: deleteError } = await approvingClient.rpc('delete_orcamento_with_admin_approval', {
-      p_orcamento_id: input.id,
-      p_motivo: motivo,
-      p_requester_id: profile.id,
-    })
+    const { data: deletionResult, error: deleteError } = await approvingClient.rpc(
+      'delete_orcamento_with_admin_approval',
+      { p_request_id: requestId },
+    )
     await approvingClient.auth.signOut()
-    if (deleteError) throw new Error(deleteError.message || 'Não foi possível excluir o orçamento.')
+    if (deleteError) {
+      throw new Error(deleteError.message || 'Não foi possível excluir o orçamento.')
+    }
+    if (deletionResult && typeof deletionResult === 'object' && 'error' in deletionResult) {
+      throw new Error(String(deletionResult.error))
+    }
 
     const deleted = await getOrcamento(input.id)
     if (!deleted) throw new Error('Orcamento excluido nao encontrado.')
