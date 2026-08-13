@@ -3,10 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const functionPath = join(process.cwd(), 'supabase/functions/admin-delete-orcamento/index.ts')
-const rpcMigrationPath = join(
-  process.cwd(),
-  'supabase/migrations/20260813000000_delete_orcamento_without_edge_function.sql',
-)
+const repositoryPath = join(process.cwd(), 'src/data/orcamentoRepository.ts')
 
 describe('admin-delete-orcamento edge function contract', () => {
   it('authenticates an approving admin without replacing the requester session', () => {
@@ -21,18 +18,19 @@ describe('admin-delete-orcamento edge function contract', () => {
     expect(source).toContain("role !== 'admin'")
     expect(source).toContain('requester.id')
     expect(source).toContain('delete_orcamento_with_admin_approval')
+    expect(source).toContain("error: 'admin_not_allowed'")
+    expect(source).toContain("writeDeleteAudit('delete_denied'")
+    expect(source).toContain("writeDeleteAudit('delete_failed'")
   })
 })
 
-describe('database deletion approval contract', () => {
-  it('binds the requester to their JWT and records denied and failed attempts', () => {
-    const source = readFileSync(rpcMigrationPath, 'utf8')
+describe('deletion repository contract', () => {
+  it('delegates credential confirmation to the Edge Function', () => {
+    const source = readFileSync(repositoryPath, 'utf8')
 
-    expect(source).toContain('v_requester_id uuid := auth.uid()')
-    expect(source).toContain("action = 'delete_denied'")
-    expect(source).toContain("action = 'delete_failed'")
-    expect(source).toContain('v_request.actor_id')
-    expect(source).not.toContain('p_requester_id')
-    expect(source).toContain("notify pgrst, 'reload schema'")
+    expect(source).toContain("supabase.functions.invoke('admin-delete-orcamento'")
+    expect(source).not.toContain('request_orcamento_deletion')
+    expect(source).not.toContain('deny_orcamento_deletion')
+    expect(source).not.toContain("createClient(supabaseUrl")
   })
 })
