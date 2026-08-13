@@ -1,7 +1,8 @@
 import { DEMO_ORCAMENTOS, DEMO_PROFILE } from '../lib/demo-data'
 import { DEFAULT_VALIDADE_DIAS } from '../lib/constants'
 import { calculateGeneralTotal, createItemSyncPlan, normalizeItems } from '../lib/orcamento'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+import { isSupabaseConfigured, supabase, supabaseKey, supabaseUrl } from '../lib/supabase'
 import type { Orcamento, OrcamentoDraft, OrcamentoFilters, OrcamentoItem, Profile } from '../types'
 
 const STORAGE_KEY = 'ckf-orcamentos-v1'
@@ -204,21 +205,6 @@ function approveLocalDeletion(input: DeleteInput): Profile {
   return DEMO_PROFILE
 }
 
-async function readFunctionErrorMessage(error: unknown): Promise<string> {
-  const maybeContext = error && typeof error === 'object' && 'context' in error ? error.context : null
-  if (maybeContext instanceof Response) {
-    const body = await maybeContext
-      .clone()
-      .json()
-      .catch(() => null)
-    if (body && typeof body === 'object' && 'error' in body && typeof body.error === 'string') {
-      return body.error
-    }
-  }
-
-  return error instanceof Error ? error.message : 'Não foi possível excluir o orçamento.'
-}
-
 function assertEditable(orcamento: Orcamento): void {
   if (orcamento.status === 'excluido') {
     throw new Error('Orçamentos excluídos não podem ser editados.')
@@ -413,18 +399,33 @@ export async function deleteOrcamento(input: DeleteInput, profile: Profile): Pro
     if (!existing) throw new Error('Orcamento nao encontrado.')
     assertEditable(existing)
 
-    const { error } = await supabase.functions.invoke('admin-delete-orcamento', {
-      body: {
-        orcamentoId: input.id,
-        motivo,
-        adminIdentifier: input.adminIdentifier,
-        adminPassword: input.adminPassword,
-      },
-    })
+    const identifier = input.adminIdentifier.trim()
+    const adminEmail = identifier.includes('@')
+      ? identifier
+      : (await supabase.rpc('get_email_by_username', { p_username: identifier })).data
 
-    if (error) {
-      throw new Error(await readFunctionErrorMessage(error))
+    if (!adminEmail || !supabaseUrl || !supabaseKey) {
+      throw new Error('Credenciais de administrador inválidas.')
     }
+
+    // Keep the requester logged in: the approving administrator is authenticated
+    // in an isolated, non-persistent client used only for this operation.
+    const approvingClient = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    const { error: signInError } = await approvingClient.auth.signInWithPassword({
+      email: String(adminEmail),
+      password: input.adminPassword,
+    })
+    if (signInError) throw new Error('Credenciais de administrador inválidas.')
+
+    const { error: deleteError } = await approvingClient.rpc('delete_orcamento_with_admin_approval', {
+      p_orcamento_id: input.id,
+      p_motivo: motivo,
+      p_requester_id: profile.id,
+    })
+    await approvingClient.auth.signOut()
+    if (deleteError) throw new Error(deleteError.message || 'Não foi possível excluir o orçamento.')
 
     const deleted = await getOrcamento(input.id)
     if (!deleted) throw new Error('Orcamento excluido nao encontrado.')
