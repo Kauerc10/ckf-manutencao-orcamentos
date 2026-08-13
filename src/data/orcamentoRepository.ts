@@ -1,8 +1,7 @@
 import { DEMO_ORCAMENTOS, DEMO_PROFILE } from '../lib/demo-data'
 import { DEFAULT_VALIDADE_DIAS } from '../lib/constants'
 import { calculateGeneralTotal, createItemSyncPlan, normalizeItems } from '../lib/orcamento'
-import { createClient } from '@supabase/supabase-js'
-import { isSupabaseConfigured, supabase, supabaseKey, supabaseUrl } from '../lib/supabase'
+import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import type { Orcamento, OrcamentoDraft, OrcamentoFilters, OrcamentoItem, Profile } from '../types'
 
 const STORAGE_KEY = 'ckf-orcamentos-v1'
@@ -19,11 +18,6 @@ type DeleteInput = {
   motivo: string
   adminIdentifier: string
   adminPassword: string
-}
-
-type SupabaseError = {
-  code?: string
-  message?: string
 }
 
 type SupabaseOrcamentoRow = {
@@ -216,17 +210,6 @@ function assertEditable(orcamento: Orcamento): void {
   }
 }
 
-function deletionRequestError(error: SupabaseError | null): Error {
-  if (error?.code === 'PGRST202' || error?.message?.includes('schema cache')) {
-    return new Error(
-      'A atualização do banco necessária para excluir orçamentos ainda não foi aplicada. ' +
-        'Aplique as migrations do Supabase e tente novamente.',
-    )
-  }
-
-  return new Error(error?.message || 'Não foi possível registrar a solicitação de exclusão.')
-}
-
 function toItemRow(item: {
   ordem: number
   quantidade: number | null
@@ -415,53 +398,37 @@ export async function deleteOrcamento(input: DeleteInput, profile: Profile): Pro
     if (!existing) throw new Error('Orcamento nao encontrado.')
     assertEditable(existing)
 
-    const identifier = input.adminIdentifier.trim()
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase não configurado para aprovar a exclusão.')
-    }
-
-    const { data: requestId, error: requestError } = await supabase.rpc('request_orcamento_deletion', {
-      p_orcamento_id: input.id,
-      p_motivo: motivo,
-      p_admin_identifier: identifier,
+    const { error } = await supabase.functions.invoke('admin-delete-orcamento', {
+      body: {
+        orcamentoId: input.id,
+        motivo,
+        adminIdentifier: input.adminIdentifier.trim(),
+        adminPassword: input.adminPassword,
+      },
     })
-    if (requestError || !requestId) {
-      throw deletionRequestError(requestError)
-    }
 
-    const adminEmail = identifier.includes('@')
-      ? identifier
-      : (await supabase.rpc('get_email_by_username', { p_username: identifier })).data
+    if (error) {
+      const maybeContext = 'context' in error ? error.context : null
+      const responseBody =
+        maybeContext instanceof Response ? await maybeContext.clone().json().catch(() => null) : null
 
-    if (!adminEmail) {
-      await supabase.rpc('deny_orcamento_deletion', { p_request_id: requestId })
-      throw new Error('Credenciais de administrador inválidas.')
-    }
+      if (
+        responseBody &&
+        typeof responseBody === 'object' &&
+        'error' in responseBody &&
+        typeof responseBody.error === 'string'
+      ) {
+        throw new Error(responseBody.error)
+      }
 
-    // Keep the requester logged in: the approving administrator is authenticated
-    // in an isolated, non-persistent client used only for this operation.
-    const approvingClient = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-    const { error: signInError } = await approvingClient.auth.signInWithPassword({
-      email: String(adminEmail),
-      password: input.adminPassword,
-    })
-    if (signInError) {
-      await supabase.rpc('deny_orcamento_deletion', { p_request_id: requestId })
-      throw new Error('Credenciais de administrador inválidas.')
-    }
+      if (error.message.includes('Failed to send a request to the Edge Function')) {
+        throw new Error(
+          'O serviço seguro de exclusão não está disponível. ' +
+            'Confirme o deploy da função admin-delete-orcamento no Supabase e tente novamente.',
+        )
+      }
 
-    const { data: deletionResult, error: deleteError } = await approvingClient.rpc(
-      'delete_orcamento_with_admin_approval',
-      { p_request_id: requestId },
-    )
-    await approvingClient.auth.signOut()
-    if (deleteError) {
-      throw new Error(deleteError.message || 'Não foi possível excluir o orçamento.')
-    }
-    if (deletionResult && typeof deletionResult === 'object' && 'error' in deletionResult) {
-      throw new Error(String(deletionResult.error))
+      throw new Error(error.message || 'Não foi possível excluir o orçamento.')
     }
 
     const deleted = await getOrcamento(input.id)
