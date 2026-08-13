@@ -216,7 +216,15 @@ async function readFunctionErrorMessage(error: unknown): Promise<string> {
     }
   }
 
-  return error instanceof Error ? error.message : 'Não foi possível excluir o orçamento.'
+  const message = error instanceof Error ? error.message : ''
+  if (message.includes('Failed to send a request to the Edge Function')) {
+    return (
+      'O serviço seguro de exclusão não está disponível. ' +
+      'Confirme o deploy da função admin-delete-orcamento no Supabase e tente novamente.'
+    )
+  }
+
+  return message || 'Não foi possível excluir o orçamento.'
 }
 
 function assertEditable(orcamento: Orcamento): void {
