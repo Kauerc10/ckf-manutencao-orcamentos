@@ -33,5 +33,6 @@ describe('database deletion approval contract', () => {
     expect(source).toContain("action = 'delete_failed'")
     expect(source).toContain('v_request.actor_id')
     expect(source).not.toContain('p_requester_id')
+    expect(source).toContain("notify pgrst, 'reload schema'")
   })
 })

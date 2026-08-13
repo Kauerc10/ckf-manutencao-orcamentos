@@ -114,3 +114,7 @@ revoke all on function public.delete_orcamento_with_admin_approval(uuid) from pu
 grant execute on function public.request_orcamento_deletion(uuid, text, text) to authenticated;
 grant execute on function public.deny_orcamento_deletion(uuid) to authenticated;
 grant execute on function public.delete_orcamento_with_admin_approval(uuid) to authenticated;
+
+-- PostgREST may keep the old function catalog until its next automatic refresh.
+-- Reload it as part of the migration so the RPCs are available immediately.
+notify pgrst, 'reload schema';

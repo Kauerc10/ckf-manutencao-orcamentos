@@ -85,6 +85,18 @@ supabase/         Migrações e Edge Function de exclusão protegida
 
 As migrações em [supabase/migrations](supabase/migrations) versionam schema, permissões, auditoria e regras de acesso. A segurança não depende de esconder ações na interface: RLS, RPCs e a Edge Function validam o acesso no Supabase.
 
+Ao publicar uma versão que adiciona ou altera RPCs, aplique as migrações no projeto
+Supabase antes de publicar o frontend:
+
+```bash
+npx supabase link --project-ref <PROJECT_REF>
+npx supabase db push
+```
+
+O deploy apenas do frontend não cria funções no banco. Se o PostgREST informar que
+uma função não existe no *schema cache*, confirme que `supabase db push` concluiu
+com sucesso; as migrações notificam o PostgREST para recarregar o schema.
+
 Os PDFs e planilhas reproduzem os dados do orçamento. A identidade do cliente usada no momento da emissão é preservada para manter a consistência do documento, mesmo quando não houver um cliente cadastrado vinculado.
 
 ## Screenshots

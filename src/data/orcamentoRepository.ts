@@ -21,6 +21,11 @@ type DeleteInput = {
   adminPassword: string
 }
 
+type SupabaseError = {
+  code?: string
+  message?: string
+}
+
 type SupabaseOrcamentoRow = {
   id: string
   numero: number
@@ -209,6 +214,17 @@ function assertEditable(orcamento: Orcamento): void {
   if (orcamento.status === 'excluido') {
     throw new Error('Orçamentos excluídos não podem ser editados.')
   }
+}
+
+function deletionRequestError(error: SupabaseError | null): Error {
+  if (error?.code === 'PGRST202' || error?.message?.includes('schema cache')) {
+    return new Error(
+      'A atualização do banco necessária para excluir orçamentos ainda não foi aplicada. ' +
+        'Aplique as migrations do Supabase e tente novamente.',
+    )
+  }
+
+  return new Error(error?.message || 'Não foi possível registrar a solicitação de exclusão.')
 }
 
 function toItemRow(item: {
@@ -410,7 +426,7 @@ export async function deleteOrcamento(input: DeleteInput, profile: Profile): Pro
       p_admin_identifier: identifier,
     })
     if (requestError || !requestId) {
-      throw new Error(requestError?.message || 'Não foi possível registrar a solicitação de exclusão.')
+      throw deletionRequestError(requestError)
     }
 
     const adminEmail = identifier.includes('@')
