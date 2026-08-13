@@ -1,7 +1,8 @@
 import { DEMO_ORCAMENTOS, DEMO_PROFILE } from '../lib/demo-data'
 import { DEFAULT_VALIDADE_DIAS } from '../lib/constants'
 import { calculateGeneralTotal, createItemSyncPlan, normalizeItems } from '../lib/orcamento'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+import { isSupabaseConfigured, supabase, supabaseKey, supabaseUrl } from '../lib/supabase'
 import type { Orcamento, OrcamentoDraft, OrcamentoFilters, OrcamentoItem, Profile } from '../types'
 
 const STORAGE_KEY = 'ckf-orcamentos-v1'
@@ -18,6 +19,11 @@ type DeleteInput = {
   motivo: string
   adminIdentifier: string
   adminPassword: string
+}
+
+type SupabaseError = {
+  code?: string
+  message?: string
 }
 
 type SupabaseOrcamentoRow = {
@@ -204,25 +210,21 @@ function approveLocalDeletion(input: DeleteInput): Profile {
   return DEMO_PROFILE
 }
 
-async function readFunctionErrorMessage(error: unknown): Promise<string> {
-  const maybeContext = error && typeof error === 'object' && 'context' in error ? error.context : null
-  if (maybeContext instanceof Response) {
-    const body = await maybeContext
-      .clone()
-      .json()
-      .catch(() => null)
-    if (body && typeof body === 'object' && 'error' in body && typeof body.error === 'string') {
-      return body.error
-    }
-  }
-
-  return error instanceof Error ? error.message : 'Não foi possível excluir o orçamento.'
-}
-
 function assertEditable(orcamento: Orcamento): void {
   if (orcamento.status === 'excluido') {
     throw new Error('Orçamentos excluídos não podem ser editados.')
   }
+}
+
+function deletionRequestError(error: SupabaseError | null): Error {
+  if (error?.code === 'PGRST202' || error?.message?.includes('schema cache')) {
+    return new Error(
+      'A atualização do banco necessária para excluir orçamentos ainda não foi aplicada. ' +
+        'Aplique as migrations do Supabase e tente novamente.',
+    )
+  }
+
+  return new Error(error?.message || 'Não foi possível registrar a solicitação de exclusão.')
 }
 
 function toItemRow(item: {
@@ -413,17 +415,53 @@ export async function deleteOrcamento(input: DeleteInput, profile: Profile): Pro
     if (!existing) throw new Error('Orcamento nao encontrado.')
     assertEditable(existing)
 
-    const { error } = await supabase.functions.invoke('admin-delete-orcamento', {
-      body: {
-        orcamentoId: input.id,
-        motivo,
-        adminIdentifier: input.adminIdentifier,
-        adminPassword: input.adminPassword,
-      },
-    })
+    const identifier = input.adminIdentifier.trim()
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase não configurado para aprovar a exclusão.')
+    }
 
-    if (error) {
-      throw new Error(await readFunctionErrorMessage(error))
+    const { data: requestId, error: requestError } = await supabase.rpc('request_orcamento_deletion', {
+      p_orcamento_id: input.id,
+      p_motivo: motivo,
+      p_admin_identifier: identifier,
+    })
+    if (requestError || !requestId) {
+      throw deletionRequestError(requestError)
+    }
+
+    const adminEmail = identifier.includes('@')
+      ? identifier
+      : (await supabase.rpc('get_email_by_username', { p_username: identifier })).data
+
+    if (!adminEmail) {
+      await supabase.rpc('deny_orcamento_deletion', { p_request_id: requestId })
+      throw new Error('Credenciais de administrador inválidas.')
+    }
+
+    // Keep the requester logged in: the approving administrator is authenticated
+    // in an isolated, non-persistent client used only for this operation.
+    const approvingClient = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    const { error: signInError } = await approvingClient.auth.signInWithPassword({
+      email: String(adminEmail),
+      password: input.adminPassword,
+    })
+    if (signInError) {
+      await supabase.rpc('deny_orcamento_deletion', { p_request_id: requestId })
+      throw new Error('Credenciais de administrador inválidas.')
+    }
+
+    const { data: deletionResult, error: deleteError } = await approvingClient.rpc(
+      'delete_orcamento_with_admin_approval',
+      { p_request_id: requestId },
+    )
+    await approvingClient.auth.signOut()
+    if (deleteError) {
+      throw new Error(deleteError.message || 'Não foi possível excluir o orçamento.')
+    }
+    if (deletionResult && typeof deletionResult === 'object' && 'error' in deletionResult) {
+      throw new Error(String(deletionResult.error))
     }
 
     const deleted = await getOrcamento(input.id)
