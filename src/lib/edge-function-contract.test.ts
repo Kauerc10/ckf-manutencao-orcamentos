@@ -4,6 +4,10 @@ import { describe, expect, it } from 'vitest'
 
 const functionPath = join(process.cwd(), 'supabase/functions/admin-delete-orcamento/index.ts')
 const repositoryPath = join(process.cwd(), 'src/data/orcamentoRepository.ts')
+const legacyRpcMigrationPath = join(
+  process.cwd(),
+  'supabase/migrations/20260813160000_disable_legacy_public_delete_rpcs.sql',
+)
 
 describe('admin-delete-orcamento edge function contract', () => {
   it('authenticates an approving admin without replacing the requester session', () => {
@@ -32,5 +36,16 @@ describe('deletion repository contract', () => {
     expect(source).not.toContain('request_orcamento_deletion')
     expect(source).not.toContain('deny_orcamento_deletion')
     expect(source).not.toContain("createClient(supabaseUrl")
+  })
+})
+
+describe('legacy deletion RPC retirement contract', () => {
+  it('removes public approval RPCs after the Edge Function is adopted', () => {
+    const source = readFileSync(legacyRpcMigrationPath, 'utf8')
+
+    expect(source).toContain('drop function if exists public.request_orcamento_deletion')
+    expect(source).toContain('drop function if exists public.deny_orcamento_deletion')
+    expect(source).toContain('drop function if exists public.delete_orcamento_with_admin_approval')
+    expect(source).toContain("notify pgrst, 'reload schema'")
   })
 })
