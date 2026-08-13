@@ -204,21 +204,6 @@ function approveLocalDeletion(input: DeleteInput): Profile {
   return DEMO_PROFILE
 }
 
-async function readFunctionErrorMessage(error: unknown): Promise<string> {
-  const maybeContext = error && typeof error === 'object' && 'context' in error ? error.context : null
-  if (maybeContext instanceof Response) {
-    const body = await maybeContext
-      .clone()
-      .json()
-      .catch(() => null)
-    if (body && typeof body === 'object' && 'error' in body && typeof body.error === 'string') {
-      return body.error
-    }
-  }
-
-  return error instanceof Error ? error.message : 'Não foi possível excluir o orçamento.'
-}
-
 function assertEditable(orcamento: Orcamento): void {
   if (orcamento.status === 'excluido') {
     throw new Error('Orçamentos excluídos não podem ser editados.')
@@ -423,7 +408,27 @@ export async function deleteOrcamento(input: DeleteInput, profile: Profile): Pro
     })
 
     if (error) {
-      throw new Error(await readFunctionErrorMessage(error))
+      const maybeContext = 'context' in error ? error.context : null
+      const responseBody = maybeContext instanceof Response
+        ? await maybeContext.clone().json().catch(() => null)
+        : null
+      if (
+        responseBody &&
+        typeof responseBody === 'object' &&
+        'error' in responseBody &&
+        typeof responseBody.error === 'string'
+      ) {
+        throw new Error(responseBody.error)
+      }
+
+      if (error.message.includes('Failed to send a request to the Edge Function')) {
+        throw new Error(
+          'O serviço seguro de exclusão não está disponível. ' +
+            'Confirme o deploy da função admin-delete-orcamento no Supabase e tente novamente.',
+        )
+      }
+
+      throw new Error(error.message || 'Não foi possível excluir o orçamento.')
     }
 
     const deleted = await getOrcamento(input.id)
