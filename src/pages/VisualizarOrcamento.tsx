@@ -195,7 +195,7 @@ export function VisualizarOrcamento() {
         </div>
       </div>
 
-      <DocumentPreview orcamento={orcamento} />
+      <DocumentPreview orcamento={orcamento} compact />
     </section>
   )
 }
