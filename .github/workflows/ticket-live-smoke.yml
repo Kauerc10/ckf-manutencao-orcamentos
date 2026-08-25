@@ -1,0 +1,82 @@
+name: Ticket Live Smoke
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Captura pública em produção
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar fronteira pública e idempotência
+        env:
+          ENDPOINT: https://xsvvdhznrdkygmvganwb.supabase.co/functions/v1/capture-site-ticket
+          ALLOWED_ORIGIN: https://ckf-home.vercel.app
+        run: |
+          node <<'NODE'
+          const endpoint = process.env.ENDPOINT
+          const origin = process.env.ALLOWED_ORIGIN
+          const payload = {
+            serviceCategory: 'heavy_machinery',
+            serviceSlug: 'manutencao-maquinas-pesadas',
+            serviceName: 'Smoke test CKF',
+            equipmentType: 'Equipamento de teste',
+            contactName: 'Teste CKF',
+            phone: '5547999999999',
+            city: 'Itajaí',
+            uf: 'SC',
+            description: 'Solicitação sintética usada apenas no smoke test automatizado.',
+            urgency: 'normal',
+            landingPath: '/smoke-test',
+            ctaSource: 'ci-smoke',
+            idempotencyKey: 'ckf-smoke-aaaaaaaa',
+          }
+
+          const denied = await fetch(endpoint, {
+            method: 'POST',
+            headers: { Origin: 'https://example.invalid', 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+          if (denied.status !== 403) throw new Error(`Origem negada esperava 403, recebeu ${denied.status}`)
+
+          const preflight = await fetch(endpoint, {
+            method: 'OPTIONS',
+            headers: { Origin: origin },
+          })
+          if (preflight.status !== 204) throw new Error(`OPTIONS esperava 204, recebeu ${preflight.status}`)
+          if (preflight.headers.get('access-control-allow-origin') !== origin) {
+            throw new Error('CORS não refletiu a origem permitida')
+          }
+
+          const invalid = await fetch(endpoint, {
+            method: 'POST',
+            headers: { Origin: origin, 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          })
+          if (invalid.status !== 400) throw new Error(`Payload inválido esperava 400, recebeu ${invalid.status}`)
+
+          const created = await fetch(endpoint, {
+            method: 'POST',
+            headers: { Origin: origin, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+          const createdBody = await created.json()
+          if (created.status !== 201) throw new Error(`Criação esperava 201, recebeu ${created.status}: ${JSON.stringify(createdBody)}`)
+          if (!/^[A-HJ-NP-Z2-9]{6}$/.test(createdBody.public_id ?? '')) throw new Error('public_id inválido')
+          if ('id' in createdBody) throw new Error('UUID interno apareceu na resposta pública')
+
+          const replay = await fetch(endpoint, {
+            method: 'POST',
+            headers: { Origin: origin, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+          const replayBody = await replay.json()
+          if (replay.status !== 200) throw new Error(`Replay esperava 200, recebeu ${replay.status}`)
+          if (replayBody.public_id !== createdBody.public_id) throw new Error('Replay criou/retornou outro ticket')
+
+          console.log(`Smoke OK: ${createdBody.public_id}`)
+          NODE
