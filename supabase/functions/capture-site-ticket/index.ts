@@ -2,6 +2,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { createPublicTicketId, parseTicketRequest, type SiteTicketInput } from './core.ts'
 
 const DEFAULT_ALLOWED_ORIGINS = ['https://ckf-home.vercel.app']
+const REQUEST_LIMIT_PER_HOUR = 5
+const PHONE_LIMIT_PER_HOUR = 3
 
 function allowedOrigins(): Set<string> {
   const configured = (Deno.env.get('CKF_SITE_ALLOWED_ORIGINS') ?? '')
@@ -37,7 +39,25 @@ function jsonResponse(origin: string | null, status: number, body: Record<string
   })
 }
 
-function toDatabaseRow(input: SiteTicketInput, publicId: string) {
+async function createRequestHash(req: Request, secret: string): Promise<string> {
+  const forwarded = req.headers.get('x-forwarded-for')
+  const rawAddress = forwarded?.split(',')[0]?.trim() || req.headers.get('cf-connecting-ip')?.trim() || ''
+  if (!rawAddress) return ''
+
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(rawAddress))
+
+  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+function toDatabaseRow(input: SiteTicketInput, publicId: string, requestHash: string) {
   return {
     public_id: publicId,
     status: 'new',
@@ -64,6 +84,7 @@ function toDatabaseRow(input: SiteTicketInput, publicId: string) {
     utm_term: input.utmTerm,
     utm_content: input.utmContent,
     idempotency_key: input.idempotencyKey,
+    request_hash: requestHash,
   }
 }
 
@@ -122,11 +143,44 @@ Deno.serve(async (req) => {
     return jsonResponse(origin, 200, { ok: true, public_id: replay.public_id })
   }
 
+  const requestHash = await createRequestHash(req, serviceRoleKey)
+  const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+
+  if (requestHash) {
+    const { count: requestCount, error: requestCountError } = await supabase
+      .from('site_tickets')
+      .select('*', { count: 'exact', head: true })
+      .eq('request_hash', requestHash)
+      .gte('created_at', cutoff)
+
+    if (requestCountError) {
+      return jsonResponse(origin, 500, { ok: false, error: 'Não foi possível registrar a solicitação.' })
+    }
+
+    if ((requestCount ?? 0) >= REQUEST_LIMIT_PER_HOUR) {
+      return jsonResponse(origin, 429, { ok: false, error: 'Muitas solicitações em pouco tempo. Tente novamente mais tarde.' })
+    }
+  }
+
+  const { count: phoneCount, error: phoneCountError } = await supabase
+    .from('site_tickets')
+    .select('*', { count: 'exact', head: true })
+    .eq('phone', parsed.value.phone)
+    .gte('created_at', cutoff)
+
+  if (phoneCountError) {
+    return jsonResponse(origin, 500, { ok: false, error: 'Não foi possível registrar a solicitação.' })
+  }
+
+  if ((phoneCount ?? 0) >= PHONE_LIMIT_PER_HOUR) {
+    return jsonResponse(origin, 429, { ok: false, error: 'Muitas solicitações em pouco tempo. Tente novamente mais tarde.' })
+  }
+
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const publicId = createPublicTicketId()
     const { data, error } = await supabase
       .from('site_tickets')
-      .insert(toDatabaseRow(parsed.value, publicId))
+      .insert(toDatabaseRow(parsed.value, publicId, requestHash))
       .select('public_id')
       .single()
 
