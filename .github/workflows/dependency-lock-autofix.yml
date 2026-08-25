@@ -24,7 +24,7 @@ jobs:
           cache: npm
 
       - name: Atualizar somente correções compatíveis do lockfile
-        run: npm audit fix --package-lock-only
+        run: npm audit fix --package-lock-only || true
 
       - name: Validar vulnerabilidades altas
         run: npm audit --audit-level=high
