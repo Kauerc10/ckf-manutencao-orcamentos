@@ -31,6 +31,9 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Auditar dependências altas
+        run: npm audit --audit-level=high
+
       - name: Verificar qualidade do código
         run: npm run lint
 
