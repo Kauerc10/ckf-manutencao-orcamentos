@@ -18,6 +18,18 @@ describe('capture-site-ticket edge function contract', () => {
     expect(source).not.toContain("'Access-Control-Allow-Origin': '*'")
   })
 
+  it('aceita deployments Vercel apenas do projeto CKF', () => {
+    expect(existsSync(functionPath)).toBe(true)
+    if (!existsSync(functionPath)) return
+
+    const source = readFileSync(functionPath, 'utf8')
+
+    expect(source).toContain('CKF_VERCEL_ORIGIN')
+    expect(source).toContain('CKF_VERCEL_ORIGIN.test(origin)')
+    expect(source).toContain('kaueruon-7006s-projects')
+    expect(source).not.toContain("endsWith('.vercel.app')")
+  })
+
   it('valida o payload e persiste com service role sem exigir login do visitante', () => {
     expect(existsSync(functionPath)).toBe(true)
     if (!existsSync(functionPath)) return
