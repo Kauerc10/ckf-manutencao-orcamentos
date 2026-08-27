@@ -15,6 +15,7 @@ describe('capture-site-ticket edge function contract', () => {
     expect(source).toContain("req.method !== 'POST'")
     expect(source).toContain('CKF_SITE_ALLOWED_ORIGINS')
     expect(source).toContain("req.headers.get('Origin')")
+    expect(source).toContain("'https://ckfmanutencao.com.br'")
     expect(source).not.toContain("'Access-Control-Allow-Origin': '*'")
   })
 

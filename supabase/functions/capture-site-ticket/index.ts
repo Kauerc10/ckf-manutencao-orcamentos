@@ -1,7 +1,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { createPublicTicketId, parseTicketRequest, type SiteTicketInput } from './core.ts'
 
-const DEFAULT_ALLOWED_ORIGINS = ['https://ckf-home.vercel.app']
+const DEFAULT_ALLOWED_ORIGINS = [
+  'https://ckfmanutencao.com.br',
+  'https://ckf-home.vercel.app',
+]
 const REQUEST_LIMIT_PER_HOUR = 5
 const PHONE_LIMIT_PER_HOUR = 3
 
