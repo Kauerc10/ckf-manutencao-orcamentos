@@ -20,4 +20,4 @@ Este repositório apoia uma operação interna da CKF Manutenção. Issues, pull
 
 ## Reporte
 
-Relatos devem ser enviados de forma privada para [kaue.ruon@gmail.com](mailto:kaue.ruon@gmail.com). Eles serão tratados com discrição e poderão resultar em moderação ou restrição de acesso.
+Relatos devem ser enviados de forma privada para [kaue@ruon.dev](mailto:kaue@ruon.dev). Eles serão tratados com discrição e poderão resultar em moderação ou restrição de acesso.
