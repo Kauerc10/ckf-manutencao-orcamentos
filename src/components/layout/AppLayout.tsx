@@ -95,6 +95,9 @@ export function AppLayout({ children }: Props) {
             <LogOut size={17} />
             <span>Sair</span>
           </button>
+          <div className="px-3 pt-2 pb-1 flex justify-center">
+            <ruon-badge project="ckf-orcamentos" theme="dark" size="sm"></ruon-badge>
+          </div>
         </div>
       </aside>
 
