@@ -152,7 +152,7 @@ Qualquer uso fora da finalidade de portfólio e avaliação profissional ocorre 
 Para solicitar autorização de uso, colaboração, adaptação, licenciamento, demonstração comercial ou qualquer finalidade fora do escopo desta licença, entre em contato com o autor:
 
 **Kauê Ruon**  
-Email: kaue.ruon@gmail.com  
+Email: kaue@ruon.dev  
 GitHub: https://github.com/Kauerc10
 
 ---

@@ -4,7 +4,7 @@
 
 Não abra issue pública para relatar falhas de autenticação, regras de acesso, dados de clientes, credenciais, chaves Supabase, URLs internas ou vulnerabilidades na função de exclusão.
 
-Envie um relato privado para [kaue.ruon@gmail.com](mailto:kaue.ruon@gmail.com), com impacto, área afetada e passos seguros para reproduzir. Nunca envie tokens, senhas, dumps ou dados reais de clientes no reporte.
+Envie um relato privado para [kaue@ruon.dev](mailto:kaue@ruon.dev), com impacto, área afetada e passos seguros para reproduzir. Nunca envie tokens, senhas, dumps ou dados reais de clientes no reporte.
 
 ## Escopo atual
 
