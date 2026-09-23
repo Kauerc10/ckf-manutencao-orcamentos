@@ -96,7 +96,7 @@ export function AppLayout({ children }: Props) {
             <span>Sair</span>
           </button>
           <div className="px-3 pt-2 pb-1 flex justify-center">
-            <ruon-badge ref="ckf-orcamentos" theme="dark" size="sm"></ruon-badge>
+            <ruon-badge project="ckf-orcamentos" theme="dark" size="sm"></ruon-badge>
           </div>
         </div>
       </aside>

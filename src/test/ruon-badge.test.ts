@@ -14,15 +14,15 @@ describe('RUON Badge Integration', () => {
     expect(indexHtml).toMatch(/<script\s+src="https:\/\/ruon\.dev\/badge\.js"\s+async><\/script>/)
   })
 
-  it('contains ruon-badge with ref="ckf-orcamentos", theme="dark", and size="sm" in AppLayout.tsx', () => {
+  it('contains ruon-badge with project="ckf-orcamentos", theme="dark", and size="sm" in AppLayout.tsx', () => {
     expect(fs.existsSync(appLayoutPath)).toBe(true)
     const appLayout = fs.readFileSync(appLayoutPath, 'utf-8')
     expect(appLayout).toContain('<ruon-badge')
-    expect(appLayout).toContain('ref="ckf-orcamentos"')
+    expect(appLayout).toContain('project="ckf-orcamentos"')
     expect(appLayout).toContain('theme="dark"')
     expect(appLayout).toContain('size="sm"')
     expect(appLayout).toMatch(
-      /<ruon-badge[\s\S]*?ref="ckf-orcamentos"[\s\S]*?theme="dark"[\s\S]*?size="sm"[\s\S]*?>[\s\S]*?<\/ruon-badge>/,
+      /<ruon-badge[\s\S]*?project="ckf-orcamentos"[\s\S]*?theme="dark"[\s\S]*?size="sm"[\s\S]*?>[\s\S]*?<\/ruon-badge>/,
     )
   })
 })

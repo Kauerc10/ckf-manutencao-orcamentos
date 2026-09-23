@@ -4,6 +4,8 @@ declare global {
   namespace JSX {
     interface IntrinsicElements {
       'ruon-badge': Omit<React.HTMLAttributes<HTMLElement>, 'ref'> & {
+        project?: string
+        'data-ref'?: string
         ref?: string
         theme?: 'auto' | 'light' | 'dark' | 'monochrome'
         size?: 'md' | 'sm'
@@ -20,6 +22,8 @@ declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'ruon-badge': Omit<React.HTMLAttributes<HTMLElement>, 'ref'> & {
+        project?: string
+        'data-ref'?: string
         ref?: string
         theme?: 'auto' | 'light' | 'dark' | 'monochrome'
         size?: 'md' | 'sm'
