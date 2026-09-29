@@ -3256,16 +3256,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .commercial-form { display:grid; gap:18px; }
 .commercial-form label, .commercial-filters label { display:grid; gap:7px; font-size:13px; font-weight:600; }
 .commercial-form label small { color:var(--muted); font-size:12px; font-weight:400; line-height:1.5; }
-.service-form-intro, .service-price-example, .service-unit-guide { padding:18px 20px; border:1px solid var(--border); background:var(--surface-alt); }
-.service-form-intro { display:grid; gap:6px; border-left:3px solid var(--accent); }
-.service-form-intro span { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; }
-.service-form-intro p, .service-price-example p, .service-unit-guide p { margin:0; line-height:1.55; }
-.service-form-intro p, .service-price-example small { color:var(--muted); font-size:12px; }
-.service-price-example { display:grid; align-content:center; gap:6px; }
-.service-price-example p { font-weight:600; }
-.service-unit-guide { display:grid; gap:12px; }
-.service-unit-guide > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 20px; }
-.service-unit-guide p { font-size:13px; }
+.service-editor { max-width:960px; container:service-editor / inline-size; }
+.service-editor-header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.service-editor-header h2 { margin:0; font-size:25px; }
+.service-code { margin:-8px 0 2px; color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+.service-price-example { display:block; color:var(--muted); font-size:12px; font-weight:400; line-height:1.5; }
+.service-price-error { color:var(--danger); }
+.service-editor input[aria-invalid="true"] { border-color:var(--danger); }
+.service-unit-guide { border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:11px 0; }
+.service-unit-guide summary { width:fit-content; cursor:pointer; color:var(--ink); font-size:12px; font-weight:600; }
+.service-unit-guide summary:hover { text-decoration:underline; text-underline-offset:3px; }
+.service-unit-guide summary:focus-visible { outline:2px solid var(--accent-2); outline-offset:4px; }
+.service-unit-guide > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 20px; padding:14px 0 3px; }
+.service-unit-guide p { margin:0; color:var(--muted); font-size:12px; line-height:1.5; }
+.service-unit-guide b { color:var(--ink); }
+.service-editor .form-footer { justify-content:flex-end; }
+.service-editor .form-footer .form-note { margin-right:auto; }
 .commercial-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
 .commercial-wide { grid-column:1/-1; }
 .commercial-check { display:flex!important; flex-direction:row; align-items:center; gap:8px; font-size:13px; padding:10px 0; }
@@ -3307,7 +3313,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .lead-timeline small { display:block; color:var(--muted); margin-top:4px; }
 .lead-timeline p { font-size:13px; }
 @media(max-width:900px) { .commercial-heading { align-items:flex-start; flex-direction:column; } .lead-detail-grid { grid-template-columns:1fr; } }
-@media(max-width:600px) { .commercial-fields, .service-unit-guide > div { grid-template-columns:1fr; } .commercial-filters { flex-direction:column; align-items:stretch; } .commercial-table { min-width:620px; } .commercial-page .panel { padding:16px; } .commercial-heading h2 { font-size:22px; } }
+@media(max-width:600px) { .commercial-fields, .service-unit-guide > div { grid-template-columns:1fr; } .service-editor-header { align-items:flex-start; flex-direction:column; } .service-editor-header h2 { font-size:22px; } .commercial-filters { flex-direction:column; align-items:stretch; } .commercial-table { min-width:620px; } .commercial-page .panel { padding:16px; } .commercial-heading h2 { font-size:22px; } }
+@container service-editor (max-width:560px) { .service-editor .commercial-fields { grid-template-columns:1fr; } .service-editor-header { align-items:flex-start; flex-direction:column; } }
 .table-pdf-preview { width:100%; height:700px; border:1px solid var(--border); margin-top:16px; background:white; }
 .commercial-document { background:white; max-width:850px; margin:24px auto; border:1px solid var(--border); box-shadow:0 8px 25px #00000012; }
 .commercial-document header { background:#0c0c0d; color:#ffffff; padding:26px 32px; border-bottom:3px solid var(--accent); }

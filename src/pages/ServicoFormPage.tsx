@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ImagePlus, Save } from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { listServicos, saveServico } from '../data/catalogoRepository'
 import { uploadCatalogoImage } from '../lib/catalogo-images'
@@ -10,6 +10,7 @@ import { ServicoImagem } from '../components/ServicoImagem'
 import type { Servico, ServicoDraft } from '../types/comercial'
 
 const UNIDADES = ['unidade', 'hora', 'metro', 'serviço'] as const
+const PRECOS_EXEMPLO: Record<string, number> = { unidade: 250, hora: 180, metro: 80, serviço: 500 }
 const VAZIO: ServicoDraft = {
   codigo: '',
   nome: '',
@@ -20,13 +21,11 @@ const VAZIO: ServicoDraft = {
   imagem: '',
   ativo: true,
 }
-function exemploCobranca(unidade: string, preco: number | null): string {
-  if (preco === null) return 'Digite o preço para ver um exemplo de cálculo.'
-  if (unidade === 'serviço') return `Um serviço fechado custa ${formatCurrency(preco)} pelo escopo descrito.`
-  const nome =
-    { unidade: 'peças ou equipamentos', hora: 'horas', metro: 'metros' }[unidade as 'unidade' | 'hora' | 'metro'] ??
-    unidade
-  return `Exemplo: 3 ${nome} × ${formatCurrency(preco)} = ${formatCurrency(preco * 3)}.`
+function exemploCobranca(unidade: string, preco: number): string {
+  if (unidade === 'serviço') return `1 serviço fechado = ${formatCurrency(preco)} pelo escopo descrito.`
+  const nome = { unidade: 'peças', hora: 'horas', metro: 'metros' }[unidade as 'unidade' | 'hora' | 'metro']
+  if (!nome) return `3 × ${formatCurrency(preco)} por ${unidade || 'unidade'} = ${formatCurrency(preco * 3)}.`
+  return `3 ${nome} × ${formatCurrency(preco)} = ${formatCurrency(preco * 3)}.`
 }
 export function ServicoFormPage() {
   const { id } = useParams()
@@ -77,9 +76,13 @@ export function ServicoFormPage() {
   const atual = servicos.find((s) => s.id === id)
   const unidadeSelecionada = UNIDADES.includes(draft.unidade as (typeof UNIDADES)[number]) ? draft.unidade : 'outro'
   const valor = parseLocalizedNumber(price)
+  const precoInvalido = price.trim() !== '' && (valor === null || valor < 0 || valor > 9999999999.99)
+  let exemploPreco = `Exemplo: ${exemploCobranca(draft.unidade, PRECOS_EXEMPLO[draft.unidade] ?? 250)}`
+  if (precoInvalido) exemploPreco = 'Informe um valor válido, como 250,00.'
+  else if (price && valor !== null) exemploPreco = exemploCobranca(draft.unidade, valor)
   async function submit(event: FormEvent) {
     event.preventDefault()
-    if (!profile || valor === null) {
+    if (!profile || valor === null || precoInvalido) {
       toast.error('Informe um preço válido.')
       return
     }
@@ -96,23 +99,17 @@ export function ServicoFormPage() {
   }
   return (
     <section className="page-stack commercial-page">
-      <div className="panel commercial-heading">
-        <div>
-          <span className="eyebrow dark">Cadastro de serviço</span>
+      <form className="panel commercial-form service-editor" onSubmit={submit}>
+        <header className="service-editor-header">
           <h2>{id ? 'Editar serviço' : 'Novo serviço'}</h2>
-          <p>Descreva o trabalho e defina o que o preço cobre.</p>
-        </div>
-        <Link className="secondary-button" to="/catalogo">
-          <ArrowLeft size={16} />
-          Voltar ao catálogo
-        </Link>
-      </div>
-      <form className="panel commercial-form" onSubmit={submit}>
-        <div className="service-form-intro">
-          <strong>Código do serviço</strong>
-          <span>{atual?.codigo ?? 'Gerado automaticamente ao salvar · ex.: CKF-00001'}</span>
-          <p>O código identifica o serviço nas tabelas e nos PDFs. Depois de criado, ele permanece o mesmo.</p>
-        </div>
+          <Link className="secondary-button" to="/catalogo">
+            <ArrowLeft size={16} />
+            Voltar ao catálogo
+          </Link>
+        </header>
+        <p className="service-code">
+          {atual ? `Código ${atual.codigo}` : 'Código gerado ao salvar · ex.: CKF-00001'}
+        </p>
         <div className="commercial-fields">
           <label>
             Nome do serviço
@@ -123,7 +120,6 @@ export function ServicoFormPage() {
               value={draft.nome}
               onChange={(e) => setDraft({ ...draft, nome: e.target.value })}
             />
-            <small>Use o nome que a equipe e o cliente reconhecerão.</small>
           </label>
           <label>
             Categoria
@@ -135,10 +131,9 @@ export function ServicoFormPage() {
               value={draft.categoria}
               onChange={(e) => setDraft({ ...draft, categoria: e.target.value })}
             />
-            <small>Agrupa os serviços no catálogo e no PDF.</small>
           </label>
           <label className="commercial-wide">
-            Escopo: o que está incluído
+            Escopo incluído
             <textarea
               required
               maxLength={2000}
@@ -147,10 +142,9 @@ export function ServicoFormPage() {
               value={draft.escopo}
               onChange={(e) => setDraft({ ...draft, escopo: e.target.value })}
             />
-            <small>Descreva limites e exclusões para não aplicar o mesmo preço a trabalhos diferentes.</small>
           </label>
           <label>
-            Como o serviço é cobrado?
+            Unidade de cobrança
             <select
               value={unidadeSelecionada}
               onChange={(e) =>
@@ -166,7 +160,6 @@ export function ServicoFormPage() {
               <option value="serviço">Por serviço fechado</option>
               <option value="outro">Outra unidade</option>
             </select>
-            <small>O preço abaixo corresponde a uma unidade escolhida aqui.</small>
           </label>
           {unidadeSelecionada === 'outro' && (
             <label>
@@ -178,7 +171,6 @@ export function ServicoFormPage() {
                 value={draft.unidade}
                 onChange={(e) => setDraft({ ...draft, unidade: e.target.value })}
               />
-              <small>Defina no escopo o que uma unidade inclui.</small>
             </label>
           )}
           <label>
@@ -186,20 +178,18 @@ export function ServicoFormPage() {
             <input
               required
               inputMode="decimal"
+              aria-invalid={precoInvalido}
               placeholder="Ex.: 250,00"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
-            <small>É a referência central; cada empresa pode ter um preço negociado.</small>
+            <output className={precoInvalido ? 'service-price-example service-price-error' : 'service-price-example'} aria-live="polite">
+              {exemploPreco}
+            </output>
           </label>
-          <div className="service-price-example">
-            <strong>Como o valor funciona</strong>
-            <p>{exemploCobranca(draft.unidade, valor)}</p>
-            <small>No orçamento, quantidade e valor continuam preenchidos manualmente.</small>
-          </div>
         </div>
-        <div className="service-unit-guide">
-          <strong>Exemplos de unidade</strong>
+        <details className="service-unit-guide">
+          <summary>Ver exemplos de cobrança por unidade</summary>
           <div>
             <p>
               <b>Unidade:</b> R$ 250 por peça; 3 peças custam R$ 750.
@@ -214,10 +204,10 @@ export function ServicoFormPage() {
               <b>Serviço:</b> valor fechado para o escopo descrito.
             </p>
           </div>
-        </div>
+        </details>
         <div className="commercial-fields">
           <label className="commercial-wide">
-            Imagem opcional (PNG, JPEG ou WebP, até 5 MB)
+            Imagem (opcional)
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
@@ -236,7 +226,7 @@ export function ServicoFormPage() {
                 }
               }}
             />
-            <small>O PDF funciona sem imagem. Inclua uma quando ela ajudar a entender o serviço.</small>
+            <small>PNG, JPEG ou WebP · até 5 MB</small>
           </label>
         </div>
         {draft.imagem ? (
@@ -246,18 +236,14 @@ export function ServicoFormPage() {
               Retirar imagem
             </button>
           </div>
-        ) : (
-          <p className="form-note">
-            <ImagePlus size={15} /> Nenhuma imagem escolhida.
-          </p>
-        )}
+        ) : null}
         <label className="commercial-check">
           <input
             type="checkbox"
             checked={draft.ativo}
             onChange={(e) => setDraft({ ...draft, ativo: e.target.checked })}
           />
-          Serviço ativo e disponível para novas tabelas
+          Disponível para novas tabelas
         </label>
         {atual && (
           <p className="form-note">
@@ -271,7 +257,9 @@ export function ServicoFormPage() {
           ))}
         </datalist>
         <div className="form-footer">
-          <span className="form-note">Preços já salvos nas tabelas das empresas permanecem como estão.</span>
+          {atual && valor !== atual.precoPadrao && (
+            <span className="form-note">Tabelas já salvas mantêm os preços anteriores.</span>
+          )}
           <button className="primary-button" disabled={saving || uploading}>
             <Save size={16} />
             {saving ? 'Salvando...' : 'Salvar serviço'}
