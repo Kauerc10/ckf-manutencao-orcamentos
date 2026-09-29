@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, Users, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, FileClock, LayoutDashboard, LogOut, Menu, Plus, Settings, Users, X, BookOpen, ListChecks, MessageSquare } from 'lucide-react'
 import { type ReactNode, useCallback, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -71,6 +71,9 @@ export function AppLayout({ children }: Props) {
             <FileClock size={18} />
             <span>Histórico</span>
           </NavLink>
+          <NavLink to="/catalogo" title="Catálogo de serviços"><BookOpen size={18}/><span>Catálogo</span></NavLink>
+          <NavLink to="/tabelas" title="Tabelas por empresa"><ListChecks size={18}/><span>Tabelas por empresa</span></NavLink>
+          <NavLink to="/leads" title="Solicitações / leads"><MessageSquare size={18}/><span>Solicitações</span></NavLink>
         </nav>
 
         <div className="sidebar-footer">
@@ -142,6 +145,9 @@ export function AppLayout({ children }: Props) {
                 <FileClock size={18} />
                 Histórico
               </NavLink>
+              <NavLink to="/catalogo" onClick={closeDrawer}><BookOpen size={18}/>Catálogo</NavLink>
+              <NavLink to="/tabelas" onClick={closeDrawer}><ListChecks size={18}/>Tabelas por empresa</NavLink>
+              <NavLink to="/leads" onClick={closeDrawer}><MessageSquare size={18}/>Solicitações</NavLink>
             </nav>
 
             <div className="drawer-footer">

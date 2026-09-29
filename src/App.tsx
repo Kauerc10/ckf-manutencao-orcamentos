@@ -14,6 +14,10 @@ import { Historico } from './pages/Historico'
 import { Login } from './pages/Login'
 import { NovoOrcamento } from './pages/NovoOrcamento'
 import { VisualizarOrcamento } from './pages/VisualizarOrcamento'
+import { Catalogo } from './pages/Catalogo'
+import { TabelasComerciais } from './pages/TabelasComerciais'
+import { Leads, LeadDetalhe } from './pages/Leads'
+import { LeadCliente } from './pages/LeadCliente'
 
 function ProtectedApp() {
   const profile = useAuthStore((state) => state.profile)
@@ -28,7 +32,7 @@ function ProtectedApp() {
     return <div className="full-page-state">Carregando CKF Sistema...</div>
   }
 
-  if (!profile) {
+  if (!profile || !profile.ativo) {
     return <Navigate to="/login" replace />
   }
 
@@ -41,6 +45,11 @@ function ProtectedApp() {
         <Route path="/clientes/:id" element={<ClienteDetalhe />} />
         <Route path="/clientes/:id/editar" element={<ClienteFormPage />} />
         <Route path="/historico" element={<Historico />} />
+        <Route path="/catalogo" element={<Catalogo />} />
+        <Route path="/tabelas" element={<TabelasComerciais />} />
+        <Route path="/leads" element={<Leads />} />
+        <Route path="/leads/:id" element={<LeadDetalhe />} />
+        <Route path="/leads/:ticketId/cliente" element={<LeadCliente />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/orcamentos/novo" element={<NovoOrcamento />} />
         <Route path="/orcamentos/:id" element={<VisualizarOrcamento />} />
