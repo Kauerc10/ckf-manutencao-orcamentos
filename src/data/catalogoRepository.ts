@@ -5,7 +5,7 @@ import type { Profile } from '../types'
 import type { Servico, ServicoDraft, Tabela, TabelaDraft, TabelaItem } from '../types/comercial'
 
 const COMMERCIAL_STORAGE = 'ckf-comercial-v1'
-type State = { servicos: Servico[]; tabelas: Tabela[] }
+type State = { servicos: Servico[]; tabelas: Tabela[]; proximoCodigo?: number }
 function read(): State {
   return JSON.parse(localStorage.getItem(COMMERCIAL_STORAGE) || '{"servicos":[],"tabelas":[]}') as State
 }
@@ -34,12 +34,9 @@ export async function listServicos(): Promise<Servico[]> {
 }
 export async function saveServico(input: ServicoDraft, profile: Profile): Promise<Servico> {
   assertAdmin(profile)
-  if (![input.codigo, input.nome, input.categoria, input.escopo, input.unidade].every((v) => v.trim()))
-    throw new Error('Preencha código, nome, categoria, escopo e unidade.')
-  if (
-    [input.codigo, input.nome, input.categoria, input.unidade].some((v) => v.length > 200) ||
-    input.escopo.length > 2000
-  )
+  if (![input.nome, input.categoria, input.escopo, input.unidade].every((v) => v.trim()))
+    throw new Error('Preencha nome, categoria, escopo e unidade.')
+  if ([input.nome, input.categoria, input.unidade].some((v) => v.length > 200) || input.escopo.length > 2000)
     throw new Error('Campos até 200 caracteres; escopo até 2000.')
   if (!Number.isFinite(input.precoPadrao) || input.precoPadrao < 0 || input.precoPadrao > 9999999999.99)
     throw new Error('Informe um preço válido.')
@@ -52,11 +49,12 @@ export async function saveServico(input: ServicoDraft, profile: Profile): Promis
   const existing = state.servicos.find((s) => s.id === input.id)
   if (existing && existing.versao !== input.versao)
     throw new Error('Este serviço foi alterado. Recarregue antes de salvar.')
-  if (state.servicos.some((s) => s.id !== input.id && s.codigo.toLowerCase() === input.codigo.trim().toLowerCase()))
-    throw new Error('Código já utilizado.')
+  let nextCode =
+    state.proximoCodigo ?? Math.max(1, ...state.servicos.map((s) => Number(/^CKF-(\d+)$/.exec(s.codigo)?.[1] ?? 0) + 1))
+  while (state.servicos.some((s) => s.codigo === `CKF-${String(nextCode).padStart(5, '0')}`)) nextCode++
   const saved: Servico = {
     ...input,
-    codigo: input.codigo.trim(),
+    codigo: existing?.codigo ?? `CKF-${String(nextCode).padStart(5, '0')}`,
     id: existing?.id ?? crypto.randomUUID(),
     precoPadrao: normalizarPreco(input.precoPadrao),
     versao: (existing?.versao ?? 0) + 1,
@@ -65,7 +63,11 @@ export async function saveServico(input: ServicoDraft, profile: Profile): Promis
     autorNome: profile.nome,
     atualizadoEm: new Date().toISOString(),
   }
-  write({ ...state, servicos: [...state.servicos.filter((s) => s.id !== saved.id), saved] })
+  write({
+    ...state,
+    proximoCodigo: existing ? state.proximoCodigo : nextCode + 1,
+    servicos: [...state.servicos.filter((s) => s.id !== saved.id), saved],
+  })
   return saved
 }
 export async function listTabelas(): Promise<Tabela[]> {

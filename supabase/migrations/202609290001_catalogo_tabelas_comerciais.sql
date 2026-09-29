@@ -6,6 +6,7 @@ create table public.catalogo_servicos (
   versao integer not null default 1
 );
 create unique index catalogo_codigo_unique on public.catalogo_servicos(lower(codigo));
+create sequence public.catalogo_codigo_seq as bigint start 1;
 create table public.tabelas_comerciais (
   id uuid primary key default gen_random_uuid(),
   empresa_id uuid not null unique references public.clientes(id),
@@ -34,20 +35,22 @@ declare
   result jsonb;
   price numeric;
   field text;
+  generated_code text;
 begin
   if not private.is_active_user() or not private.is_admin() then raise exception 'Apenas administradores ativos podem alterar o catálogo.'; end if;
   perform pg_advisory_xact_lock(hashtextextended(sid::text, 0));
   select * into oldrow from public.catalogo_servicos where id = sid for update;
   if oldrow.id is not null and oldrow.versao <> coalesce((p_dados->>'versao')::integer,0) then raise exception 'Este serviço foi alterado. Recarregue antes de salvar.'; end if;
   if oldrow.id is null and nullif(p_dados->>'id','') is not null then raise exception 'Serviço não encontrado.'; end if;
-  foreach field in array array['codigo','nome','categoria','escopo','unidade'] loop
+  generated_code := case when oldrow.id is null then 'CKF-' || lpad(nextval('public.catalogo_codigo_seq')::text,5,'0') else oldrow.codigo end;
+  foreach field in array array['nome','categoria','escopo','unidade'] loop
     if coalesce(length(btrim(p_dados->>field)),0) < 1 or length(p_dados->>field) > (case when field='escopo' then 2000 else 200 end) then raise exception 'Preencha os campos do serviço (até 200 caracteres; escopo até 2000).'; end if;
   end loop;
   price := (p_dados->>'precoPadrao')::numeric;
   if price is null or price::text in ('NaN','Infinity','-Infinity') or price < 0 or price > 9999999999.99 then raise exception 'Preço inválido.'; end if;
   if coalesce(p_dados->>'imagem','') <> '' and (p_dados->>'imagem') !~ '^servicos/[0-9a-f-]+\.(png|jpg|webp)$' then raise exception 'Imagem inválida.'; end if;
   result := jsonb_build_object(
-    'id',sid,'codigo',btrim(p_dados->>'codigo'),'nome',btrim(p_dados->>'nome'),
+    'id',sid,'codigo',generated_code,'nome',btrim(p_dados->>'nome'),
     'categoria',btrim(p_dados->>'categoria'),'escopo',btrim(p_dados->>'escopo'),
     'unidade',btrim(p_dados->>'unidade'),'precoPadrao',round(price,2),
     'imagem',coalesce(p_dados->>'imagem',''),'ativo',coalesce((p_dados->>'ativo')::boolean,true),

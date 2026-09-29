@@ -30,7 +30,7 @@ async function asUser(id: string, role = 'authenticated') {
 }
 it('salva tabelas atomicamente, preserva histórico e impede escrita de operador no banco', async () => {
   await asUser(admin)
-  const s = await db.query<{ result: { id: string; versao: number } }>(
+  const s = await db.query<{ result: { id: string; versao: number; codigo: string } }>(
     `select public.save_catalogo_servico($1::jsonb) result`,
     [
       JSON.stringify({
@@ -46,6 +46,7 @@ it('salva tabelas atomicamente, preserva histórico e impede escrita de operador
     ],
   )
   const sid = s.rows[0].result.id
+  expect(s.rows[0].result.codigo).toBe('CKF-00001')
   const draft = { empresaId: empresa, titulo: 'Tabela', versao: 0, itens: [{ servicoId: sid, preco: 90 }] }
   await db.query(`select public.save_tabela_comercial($1::jsonb)`, [JSON.stringify(draft)])
   await db.query(`select public.save_catalogo_servico($1::jsonb)`, [
@@ -70,6 +71,13 @@ it('salva tabelas atomicamente, preserva histórico e impede escrita de operador
   expect(serviceAfterEdit.criadorNome).toBe('Admin')
   expect(serviceAfterEdit.criadoEm).toBeDefined()
   expect(serviceAfterEdit.autorNome).toBe('Admin')
+  expect((await db.query<{ codigo: string }>('select codigo from public.catalogo_servicos')).rows[0].codigo).toBe(
+    'CKF-00001',
+  )
+  const next = await db.query<{ result: { codigo: string } }>('select public.save_catalogo_servico($1::jsonb) result', [
+    JSON.stringify({ nome: 'Corte', categoria: 'Usinagem', escopo: 'Corte de uma peça', unidade: 'unidade', precoPadrao: 50 }),
+  ])
+  expect(next.rows[0].result.codigo).toBe('CKF-00002')
   await db.query(`select public.save_tabela_comercial($1::jsonb)`, [
     JSON.stringify({ ...draft, versao: 1, itens: [{ servicoId: sid, preco: 120 }] }),
   ])
@@ -87,7 +95,8 @@ it('salva tabelas atomicamente, preserva histórico e impede escrita de operador
     (await db.query<{ result: string }>('select public.remove_catalogo_servico($1) result', [sid])).rows[0].result,
   ).toBe('archived')
   expect(
-    (await db.query<{ dados: { ativo: boolean } }>('select dados from public.catalogo_servicos')).rows[0].dados.ativo,
+    (await db.query<{ dados: { ativo: boolean } }>('select dados from public.catalogo_servicos where id = $1', [sid]))
+      .rows[0].dados.ativo,
   ).toBe(false)
   await expect(
     db.query(`select public.save_tabela_comercial($1::jsonb)`, [JSON.stringify({ ...draft, versao: 1 })]),

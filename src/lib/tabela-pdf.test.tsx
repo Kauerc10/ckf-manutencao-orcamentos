@@ -2,17 +2,57 @@
 import { expect, it } from 'vitest'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
-import { TabelaPDF } from '../components/pdf/TabelaPDF'
-import { toTabelaDocument } from './tabela-document'
-import { EMPRESA } from './constants'
-import type { TabelaRevisao } from '../types/comercial'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { TabelaPDF } from '../components/pdf/TabelaPDF'
+import { toCatalogoDocument, toTabelaDocument } from './tabela-document'
+import { EMPRESA } from './constants'
+import type { Servico, TabelaRevisao } from '../types/comercial'
 
+it('gera o PDF do catálogo sem destinatário nem diferenças internas', async () => {
+  const servico: Servico = {
+    id: 's1',
+    codigo: 'CKF-00001',
+    nome: 'Soldagem de estrutura',
+    categoria: 'Soldagem',
+    escopo: 'Solda de uma peça com preparação e acabamento.',
+    unidade: 'unidade',
+    precoPadrao: 250,
+    imagem: '',
+    ativo: true,
+    versao: 1,
+    criadorNome: 'Interno',
+    criadoEm: '2026-09-29',
+    autorNome: 'Interno',
+    atualizadoEm: '2026-09-29',
+  }
+  const doc = toCatalogoDocument([servico])
+  expect(doc.tipo).toBe('catalogo')
+  expect(toCatalogoDocument([{ ...servico, ativo: false }]).itens).toHaveLength(0)
+  const buffer = await renderToBuffer(<TabelaPDF document={doc} empresa={EMPRESA} />)
+  const task = getDocument({
+    data: new Uint8Array(buffer),
+    standardFontDataUrl: resolve('node_modules/pdfjs-dist/standard_fonts') + '/',
+    useSystemFonts: false,
+  })
+  const parsed = await task.promise
+  const text = (await (await parsed.getPage(1)).getTextContent()).items.map((i) => ('str' in i ? i.str : '')).join(' ')
+  expect(text).toContain('Catálogo de serviços CKF')
+  expect(text).toContain('CKF-00001')
+  expect(text).toContain('R$ 250,00')
+  expect(text).toContain('unidade')
+  expect(text).not.toContain('Interno')
+  expect(text).not.toContain('Tabela 0')
+  await task.destroy()
+}, 30000)
 it('exporta múltiplas páginas sem expor padrão, ajuste ou autoria interna', async () => {
   const tabela: TabelaRevisao = {
     titulo: 'Tabela de serviços CKF',
-    empresa: { id: 'teste', nome: 'Empresa de exemplo', documento: '12.345.678/0001-95' },
+    empresa: {
+      id: 'teste',
+      nome: 'Empresa de exemplo',
+      documento: '12.345.678/0001-95',
+    },
     versao: 2,
     autorNome: 'AUTOR-INTERNO-SECRETO',
     criadoEm: '2026-09-29T12:00:00Z',
@@ -60,7 +100,10 @@ it('exporta múltiplas páginas sem expor padrão, ajuste ou autoria interna', a
       const page = await parsed.getPage(pageNumber)
       const viewport = page.getViewport({ scale: 1.4 })
       const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height))
-      await page.render({ canvas: canvas as unknown as HTMLCanvasElement, viewport }).promise
+      await page.render({
+        canvas: canvas as unknown as HTMLCanvasElement,
+        viewport,
+      }).promise
       writeFileSync(`${dir}/tabela-pagina-${pageNumber}.png`, canvas.toBuffer('image/png'))
     }
     const logo = `data:image/png;base64,${readFileSync('public/brand/ckf-logo-horizontal-white-amber-trimmed.png').toString('base64')}`
@@ -76,7 +119,10 @@ it('exporta múltiplas páginas sem expor padrão, ajuste ou autoria interna', a
     const page = await brandedDoc.getPage(1)
     const viewport = page.getViewport({ scale: 1.4 })
     const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height))
-    await page.render({ canvas: canvas as unknown as HTMLCanvasElement, viewport }).promise
+    await page.render({
+      canvas: canvas as unknown as HTMLCanvasElement,
+      viewport,
+    }).promise
     writeFileSync(`${dir}/tabela-exemplo.png`, canvas.toBuffer('image/png'))
     await brandedTask.destroy()
   }
@@ -86,7 +132,11 @@ it('exporta múltiplas páginas sem expor padrão, ajuste ou autoria interna', a
 it('mantém todo o escopo de um serviço quando o texto atravessa páginas', async () => {
   const tabela: TabelaRevisao = {
     titulo: 'Tabela de serviços CKF',
-    empresa: { id: 'teste', nome: 'Empresa de exemplo', documento: '12.345.678/0001-95' },
+    empresa: {
+      id: 'teste',
+      nome: 'Empresa de exemplo',
+      documento: '12.345.678/0001-95',
+    },
     versao: 1,
     autorNome: 'Admin',
     criadoEm: '2026-09-29T12:00:00Z',
@@ -129,7 +179,10 @@ it('mantém todo o escopo de um serviço quando o texto atravessa páginas', asy
     const page = await parsed.getPage(parsed.numPages)
     const viewport = page.getViewport({ scale: 1.4 })
     const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height))
-    await page.render({ canvas: canvas as unknown as HTMLCanvasElement, viewport }).promise
+    await page.render({
+      canvas: canvas as unknown as HTMLCanvasElement,
+      viewport,
+    }).promise
     writeFileSync(`${dir}/tabela-escopo-longo-ultima-pagina.png`, canvas.toBuffer('image/png'))
   }
   await task.destroy()

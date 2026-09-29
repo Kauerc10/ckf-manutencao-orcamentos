@@ -86,7 +86,10 @@ export function TabelaPDF({
 }) {
   const categories = [...new Set(document.itens.map((i) => i.categoria))]
   return (
-    <Document title={`${document.titulo} — ${document.empresa.nome}`} author={empresa.nome}>
+    <Document
+      title={document.tipo === 'catalogo' ? document.titulo : `${document.titulo} — ${document.empresa.nome}`}
+      author={empresa.nome}
+    >
       <Page size="A4" style={styles.page}>
         <View fixed style={styles.header}>
           {logo ? <Image src={logo} style={styles.logo} /> : <Text style={styles.brand}>{empresa.nome}</Text>}
@@ -100,7 +103,9 @@ export function TabelaPDF({
         <View fixed style={styles.heading}>
           <Text style={styles.title}>{document.titulo}</Text>
           <Text>
-            {document.empresa.nome} · {document.empresa.documento}
+            {document.tipo === 'catalogo'
+              ? 'Preços padrão por unidade de cobrança'
+              : `${document.empresa.nome} · ${document.empresa.documento}`}
           </Text>
         </View>
         <View fixed style={styles.columns}>
@@ -134,7 +139,8 @@ export function TabelaPDF({
         ))}
         <View fixed style={styles.footer}>
           <Text>
-            Tabela {document.versao} · {formatDateTimeBR(document.data)}
+            {document.tipo === 'catalogo' ? 'Catálogo de serviços' : `Tabela ${document.versao}`} ·{' '}
+            {formatDateTimeBR(document.data)}
           </Text>
           <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>

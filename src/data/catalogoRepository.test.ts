@@ -4,6 +4,24 @@ vi.mock('../lib/supabase', () => ({ supabase: null, isSupabaseConfigured: false 
 import { listServicos, saveServico, saveTabela, listTabelas, removeServico } from './catalogoRepository'
 
 beforeEach(() => localStorage.clear())
+it('gera códigos sequenciais e imutáveis sem pedir código no cadastro', async () => {
+  const base = {
+    codigo: '',
+    nome: 'Solda',
+    categoria: 'Soldagem',
+    escopo: 'Mão de obra em uma peça',
+    unidade: 'unidade',
+    precoPadrao: 250,
+    imagem: '',
+    ativo: true,
+  }
+  const primeiro = await saveServico(base, DEMO_PROFILE)
+  const segundo = await saveServico({ ...base, nome: 'Outra solda' }, DEMO_PROFILE)
+  expect(primeiro.codigo).toBe('CKF-00001')
+  expect(segundo.codigo).toBe('CKF-00002')
+  const editado = await saveServico({ ...primeiro, codigo: 'MANUAL-999', nome: 'Solda revisada' }, DEMO_PROFILE)
+  expect(editado.codigo).toBe(primeiro.codigo)
+})
 it('preserva o preço negociado e a revisão anterior depois de reajustar o padrão', async () => {
   const servico = await saveServico(
     {

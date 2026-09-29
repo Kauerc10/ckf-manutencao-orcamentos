@@ -1,7 +1,7 @@
 import { BRAND_ASSETS } from './constants'
 import { catalogoImageUrl } from './catalogo-images'
-import { toTabelaDocument } from './tabela-document'
-import type { TabelaRevisao } from '../types/comercial'
+import { toCatalogoDocument, toTabelaDocument, type TabelaDocument } from './tabela-document'
+import type { Servico, TabelaRevisao } from '../types/comercial'
 import type { SystemSettings } from '../types'
 async function imagemParaPDF(path: string): Promise<string> {
   if (!path) return ''
@@ -27,11 +27,20 @@ export async function createTabelaPDF(
   settings: SystemSettings,
   imagens: boolean,
 ): Promise<Blob> {
+  return renderDocumentoComercial(toTabelaDocument(tabela, imagens), settings)
+}
+export async function createCatalogoPDF(
+  servicos: Servico[],
+  settings: SystemSettings,
+  imagens: boolean,
+): Promise<Blob> {
+  return renderDocumentoComercial(toCatalogoDocument(servicos, imagens), settings)
+}
+async function renderDocumentoComercial(document: TabelaDocument, settings: SystemSettings): Promise<Blob> {
   const [{ pdf }, { TabelaPDF }] = await Promise.all([
     import('@react-pdf/renderer'),
     import('../components/pdf/TabelaPDF'),
   ])
-  const document = toTabelaDocument(tabela, imagens)
   await Promise.all(
     document.itens.map(async (item) => {
       item.imagem = await imagemParaPDF(item.imagem)

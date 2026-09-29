@@ -1,84 +1,83 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Save, BookOpen, Pencil, Trash2 } from 'lucide-react'
+import { BookOpen, Download, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { listServicos, saveServico, removeServico } from '../data/catalogoRepository'
+import { listServicos, removeServico } from '../data/catalogoRepository'
+import { formatCurrency, formatDateTimeBR } from '../lib/formatters'
+import { toCatalogoDocument, type TabelaDocument } from '../lib/tabela-document'
 import { useAuthStore } from '../stores/authStore'
-import { formatCurrency, formatDateTimeBR, parseLocalizedNumber } from '../lib/formatters'
-import { uploadCatalogoImage } from '../lib/catalogo-images'
+import { useSystemSettingsStore } from '../stores/systemSettingsStore'
 import { ServicoImagem } from '../components/ServicoImagem'
+import { TabelaPreview } from '../components/TabelaPreview'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import type { Servico, ServicoDraft } from '../types/comercial'
+import type { Servico } from '../types/comercial'
 
-const empty: ServicoDraft = {
-  codigo: '',
-  nome: '',
-  categoria: '',
-  escopo: '',
-  unidade: '',
-  precoPadrao: 0,
-  imagem: '',
-  ativo: true,
-}
 export function Catalogo() {
   const profile = useAuthStore((s) => s.profile)
   const admin = profile?.ativo && profile.role === 'admin'
+  const settings = useSystemSettingsStore((s) => s.settings)
   const [servicos, setServicos] = useState<Servico[]>([])
-  const [draft, setDraft] = useState<ServicoDraft | null>(null)
-  const [price, setPrice] = useState('')
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
   const [archived, setArchived] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [remove, setRemove] = useState<Servico | null>(null)
+  const [imagens, setImagens] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [pdfPreview, setPdfPreview] = useState<{
+    url: string
+    filename: string
+    document: TabelaDocument
+  } | null>(null)
+  useEffect(
+    () => () => {
+      if (pdfPreview) URL.revokeObjectURL(pdfPreview.url)
+    },
+    [pdfPreview],
+  )
   const reload = useCallback(async () => {
     try {
       setServicos(await listServicos())
       setError('')
     } catch {
-      setError('Não foi possível carregar o catálogo. Confira se as migrações foram aplicadas e tente novamente.')
+      setError('Não foi possível carregar o catálogo. Confira as migrações e tente novamente.')
     } finally {
       setLoading(false)
     }
   }, [])
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- load repository data on mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate repository data on mount
     void reload()
   }, [reload])
-  function edit(s: ServicoDraft) {
-    setDraft({ ...s })
-    setPrice(String(s.precoPadrao))
-  }
-  async function submit(e: FormEvent) {
-    e.preventDefault()
-    if (!draft || !profile) return
-    const value = parseLocalizedNumber(price)
-    if (value === null) {
-      toast.error('Informe o preço padrão.')
-      return
-    }
-    setSaving(true)
-    try {
-      await saveServico({ ...draft, precoPadrao: value }, profile)
-      setDraft(null)
-      await reload()
-      toast.success('Serviço salvo.')
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao salvar serviço.')
-    } finally {
-      setSaving(false)
-    }
-  }
+  const ativos = servicos.filter((s) => s.ativo)
   const visible = servicos.filter(
     (s) =>
       (archived || s.ativo) &&
       (!category || s.categoria === category) &&
       `${s.codigo} ${s.nome}`.toLowerCase().includes(search.toLowerCase()),
   )
-  const editingService = servicos.find((s) => s.id === draft?.id)
+  async function gerarPDF() {
+    if (!ativos.length) return
+    setExporting(true)
+    try {
+      const { createCatalogoPDF } = await import('../lib/export-tabela')
+      const document = toCatalogoDocument(ativos, imagens)
+      const blob = await createCatalogoPDF(ativos, settings, imagens)
+      setPdfPreview({
+        url: URL.createObjectURL(blob),
+        filename: `Catalogo_CKF_${new Date().toISOString().slice(0, 10)}.pdf`,
+        document,
+      })
+      toast.success('PDF do catálogo gerado. Confira a prévia e baixe o documento.')
+    } catch (e) {
+      console.error('Falha ao gerar PDF do catálogo', e)
+      toast.error(e instanceof Error ? e.message : 'Não foi possível gerar o PDF do catálogo.')
+    } finally {
+      setExporting(false)
+    }
+  }
   return (
     <section className="page-stack commercial-page">
       <div className="panel commercial-heading">
@@ -93,117 +92,33 @@ export function Catalogo() {
             Tabelas por empresa
           </Link>
           {admin && (
-            <button className="secondary-button" onClick={() => edit(empty)}>
+            <Link className="secondary-button" to="/catalogo/novo">
               <Plus size={16} />
               Novo serviço
-            </button>
+            </Link>
           )}
         </div>
       </div>
-      {draft && admin && (
-        <form className="panel commercial-form" onSubmit={submit}>
-          <div className="panel-heading">
-            <h3>{draft.id ? 'Editar serviço' : 'Novo serviço'}</h3>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => setDraft(null)}
-              disabled={saving || uploading}
-            >
-              Cancelar
-            </button>
-          </div>
-          <div className="commercial-fields">
-            {(['codigo', 'nome', 'categoria', 'unidade'] as const).map((key) => (
-              <label key={key}>
-                {{ codigo: 'Código', nome: 'Serviço', categoria: 'Categoria', unidade: 'Unidade de cobrança' }[key]}
-                <input
-                  required
-                  maxLength={200}
-                  value={draft[key]}
-                  list={key === 'categoria' ? 'categorias' : key === 'unidade' ? 'unidades' : undefined}
-                  onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
-                />
-              </label>
-            ))}
-            <label>
-              Preço padrão (R$)
-              <input required inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
-            </label>
-            <label className="commercial-check">
-              <input
-                type="checkbox"
-                checked={draft.ativo}
-                onChange={(e) => setDraft({ ...draft, ativo: e.target.checked })}
-              />
-              Serviço ativo
-            </label>
-            <label className="commercial-wide">
-              Escopo — o que está incluído
-              <textarea
-                required
-                maxLength={2000}
-                rows={3}
-                value={draft.escopo}
-                onChange={(e) => setDraft({ ...draft, escopo: e.target.value })}
-              />
-            </label>
-            <label className="commercial-wide">
-              Imagem opcional (PNG, JPEG ou WebP, até 5 MB)
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                disabled={uploading || saving}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file || !profile) return
-                  setUploading(true)
-                  try {
-                    const path = await uploadCatalogoImage(file, profile)
-                    setDraft((current) => (current ? { ...current, imagem: path } : null))
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : 'Falha no envio.')
-                  } finally {
-                    setUploading(false)
-                  }
-                }}
-              />
-              {uploading && <span>Enviando imagem...</span>}
-            </label>
-          </div>
-          {editingService && (
-            <p className="form-note">
-              Criado por {editingService.criadorNome} em {formatDateTimeBR(editingService.criadoEm)} · Última alteração
-              por {editingService.autorNome} em {formatDateTimeBR(editingService.atualizadoEm)}
+      <div className="panel commercial-form">
+        <div className="commercial-heading">
+          <div>
+            <h3>PDF do catálogo principal</h3>
+            <p>
+              Todos os serviços ativos, organizados por categoria. O preço mostrado é o padrão para cada unidade de
+              cobrança.
             </p>
-          )}
-          {draft.imagem && (
-            <div className="commercial-actions">
-              <ServicoImagem path={draft.imagem} nome={draft.nome} />
-              <button type="button" className="secondary-button" onClick={() => setDraft({ ...draft, imagem: '' })}>
-                Retirar imagem
-              </button>
-            </div>
-          )}
-          <datalist id="categorias">
-            {[...new Set(servicos.map((s) => s.categoria))].map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-          <datalist id="unidades">
-            {[...new Set(['hora', 'unidade', 'metro', 'serviço', ...servicos.map((s) => s.unidade)])].map((u) => (
-              <option key={u} value={u} />
-            ))}
-          </datalist>
-          <div className="form-footer">
-            <span className="form-note">Preços de tabelas existentes são preservados.</span>
-            <button className="primary-button" disabled={saving || uploading}>
-              <Save size={16} />
-              {saving ? 'Salvando...' : 'Salvar serviço'}
-            </button>
           </div>
-        </form>
-      )}
+          <button className="primary-button" disabled={!ativos.length || exporting} onClick={gerarPDF}>
+            <Download size={16} />
+            {exporting ? 'Gerando...' : 'Gerar PDF do catálogo'}
+          </button>
+        </div>
+        <label className="commercial-check">
+          <input type="checkbox" checked={imagens} onChange={(e) => setImagens(e.target.checked)} />
+          Incluir imagens no PDF
+        </label>
+        {!ativos.length && <p className="form-note">Cadastre ao menos um serviço ativo para gerar o PDF.</p>}
+      </div>
       <div className="panel">
         <div className="commercial-filters">
           <label>
@@ -230,6 +145,7 @@ export function Catalogo() {
           <div role="alert">
             <p>{error}</p>
             <button className="secondary-button" onClick={reload}>
+              <RefreshCw size={15} />
               Tentar novamente
             </button>
           </div>
@@ -238,9 +154,7 @@ export function Catalogo() {
             <BookOpen size={30} />
             <h3>{servicos.length ? 'Nenhum serviço encontrado' : 'Seu catálogo começa aqui'}</h3>
             <p>
-              {servicos.length
-                ? 'Revise a busca e os filtros.'
-                : 'Cadastre os serviços para montar tabelas por empresa.'}
+              {servicos.length ? 'Revise a busca e os filtros.' : 'Cadastre serviços para montar tabelas por empresa.'}
             </p>
           </div>
         ) : (
@@ -278,13 +192,20 @@ export function Catalogo() {
                       <p className="service-scope">{s.escopo}</p>
                     </td>
                     <td>{s.unidade}</td>
-                    <td className="money-cell">{formatCurrency(s.precoPadrao)}</td>
+                    <td className="money-cell">
+                      {formatCurrency(s.precoPadrao)}
+                      <small>por {s.unidade}</small>
+                    </td>
                     {admin && (
                       <td>
                         <div className="commercial-actions">
-                          <button className="secondary-button" aria-label={`Editar ${s.nome}`} onClick={() => edit(s)}>
+                          <Link
+                            className="secondary-button"
+                            aria-label={`Editar ${s.nome}`}
+                            to={`/catalogo/${s.id}/editar`}
+                          >
                             <Pencil size={15} />
-                          </button>
+                          </Link>
                           <button
                             className="secondary-button"
                             aria-label={`Remover ${s.nome}`}
@@ -302,6 +223,22 @@ export function Catalogo() {
           </div>
         )}
       </div>
+      {pdfPreview && (
+        <div className="panel">
+          <div className="commercial-heading">
+            <h3>Documento para conferir</h3>
+            <div className="commercial-actions">
+              <a className="primary-button" href={pdfPreview.url} download={pdfPreview.filename}>
+                Baixar PDF
+              </a>
+              <button className="secondary-button" onClick={() => setPdfPreview(null)}>
+                Fechar prévia
+              </button>
+            </div>
+          </div>
+          <TabelaPreview document={pdfPreview.document} settings={settings} />
+        </div>
+      )}
       <ConfirmDialog
         open={!!remove}
         title="Remover serviço?"

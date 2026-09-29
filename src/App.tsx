@@ -15,6 +15,7 @@ import { Login } from './pages/Login'
 import { NovoOrcamento } from './pages/NovoOrcamento'
 import { VisualizarOrcamento } from './pages/VisualizarOrcamento'
 import { Catalogo } from './pages/Catalogo'
+import { ServicoFormPage } from './pages/ServicoFormPage'
 import { TabelasComerciais } from './pages/TabelasComerciais'
 import { Leads, LeadDetalhe } from './pages/Leads'
 import { LeadCliente } from './pages/LeadCliente'
@@ -46,6 +47,8 @@ function ProtectedApp() {
         <Route path="/clientes/:id/editar" element={<ClienteFormPage />} />
         <Route path="/historico" element={<Historico />} />
         <Route path="/catalogo" element={<Catalogo />} />
+        <Route path="/catalogo/novo" element={<ServicoFormPage />} />
+        <Route path="/catalogo/:id/editar" element={<ServicoFormPage />} />
         <Route path="/tabelas" element={<TabelasComerciais />} />
         <Route path="/leads" element={<Leads />} />
         <Route path="/leads/:id" element={<LeadDetalhe />} />

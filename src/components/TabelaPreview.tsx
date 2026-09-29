@@ -22,7 +22,9 @@ export function TabelaPreview({ document, settings }: { document: TabelaDocument
       <div className="commercial-document-body">
         <h3>{document.titulo}</h3>
         <p>
-          {document.empresa.nome} · {document.empresa.documento}
+          {document.tipo === 'catalogo'
+            ? 'Preços padrão por unidade de cobrança'
+            : `${document.empresa.nome} · ${document.empresa.documento}`}
         </p>
         {[...new Set(document.itens.map((i) => i.categoria))].map((c) => (
           <section key={c}>
@@ -58,7 +60,8 @@ export function TabelaPreview({ document, settings }: { document: TabelaDocument
           </section>
         ))}
         <footer>
-          Tabela {document.versao} · {formatDateTimeBR(document.data)}
+          {document.tipo === 'catalogo' ? 'Catálogo de serviços' : `Tabela ${document.versao}`} ·{' '}
+          {formatDateTimeBR(document.data)}
         </footer>
       </div>
     </div>

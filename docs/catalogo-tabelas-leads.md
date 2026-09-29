@@ -6,6 +6,8 @@ Aplicar as migrações `202609290001_catalogo_tabelas_comerciais.sql` e `2026092
 
 O formulário público do CKF Site continua usando a captura existente. A aplicação web carrega as solicitações com sessão interna ativa. Administradores gerenciam catálogo e tabelas; demais usuários ativos consultam e exportam. Todos os usuários ativos acompanham as solicitações. Os preços dos orçamentos permanecem manuais.
 
+O catálogo principal tem um PDF próprio, independente das tabelas por empresa. Ele lista somente serviços ativos, por categoria, com código, escopo, unidade e preço padrão; imagens são opcionais. O cadastro e a edição de serviço usam uma tela dedicada. Novos códigos são gerados ao salvar no padrão sequencial `CKF-00001` e ficam fixos após a criação; códigos antigos continuam válidos. A unidade informa a base do preço: por exemplo, R$ 250 por peça significa R$ 750 para três peças. Para valor fechado, selecione `serviço` e descreva exatamente o escopo coberto. O formulário mostra exemplos de preenchimento e de cálculo; a quantidade e o preço dos orçamentos continuam manuais.
+
 Se o ambiente não tiver as migrações, os novos painéis mostram um erro de carregamento; aplicar o esquema antes de disponibilizar o frontend. As migrações ainda não foram aplicadas em produção por esta branch.
 
 ## Imagens e histórico
