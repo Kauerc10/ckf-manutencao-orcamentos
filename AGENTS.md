@@ -16,6 +16,10 @@ Use the default roles: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-f
 
 Use a single context: root `CONTEXT.md` and `docs/adr/`, created as domain decisions emerge. See `docs/agents/domain.md`.
 
+### Git e revisão
+
+Não use `codex/` no nome das branches. Escreva commits e PRs em português, de forma natural e profissional, como comunicação da equipe CKF. Humor leve cabe quando ajudar o texto, sem atrapalhar a revisão.
+
 ## Catálogo comercial
 
 Mantenha o PDF do catálogo principal separado das tabelas por empresa. Cadastre e edite serviços em uma tela própria, com exemplos didáticos de escopo e unidade de cobrança. Gere códigos sequenciais `CKF-00001` no servidor; preserve os códigos existentes e não os altere na edição. O preço padrão corresponde a uma unidade declarada, enquanto quantidade e valores no orçamento continuam manuais.
