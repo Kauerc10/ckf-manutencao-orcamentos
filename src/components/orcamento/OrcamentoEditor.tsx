@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { saveOrcamento } from '../../data/orcamentoRepository'
+import { convertTicket } from '../../data/leadRepository'
 import { DEFAULT_ITEM_ROWS, DEFAULT_VALIDADE_DIAS, MAX_ITEM_ROWS } from '../../lib/constants'
 import { parseLocalizedNumber, formatOrcamentoNumero } from '../../lib/formatters'
 import { calculateGeneralTotal, calculateItemTotal, createInitialItems } from '../../lib/orcamento'
@@ -18,6 +19,8 @@ import { RepresentantePicker } from '../cliente/RepresentantePicker'
 
 type Props = {
   existing?: Orcamento
+  initial?: OrcamentoDraft
+  ticketId?: string
 }
 
 function todayIso() {
@@ -70,7 +73,7 @@ function draftFromExisting(existing?: Orcamento, validadePadraoDias = DEFAULT_VA
   }
 }
 
-export function OrcamentoEditor({ existing }: Props) {
+export function OrcamentoEditor({ existing, initial, ticketId }: Props) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const profile = useAuthStore((state) => state.profile)
@@ -82,7 +85,7 @@ export function OrcamentoEditor({ existing }: Props) {
     reload: reloadClientes,
   } = useClientes()
   const [draft, setDraft] = useState<OrcamentoDraft>(() =>
-    draftFromExisting(existing, settings.validadePadraoDias, settings.observacoesPadrao),
+    initial ?? draftFromExisting(existing, settings.validadePadraoDias, settings.observacoesPadrao),
   )
   const [saving, setSaving] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -200,13 +203,14 @@ export function OrcamentoEditor({ existing }: Props) {
 
     setSaving(true)
     try {
-      const saved = await saveOrcamento({
+      const input = {
         ...result.data,
         revisao: draft.revisao,
         parentId: draft.parentId,
         total,
         id: existing?.id
-      }, profile)
+      }
+      const saved = ticketId ? await convertTicket(ticketId, input, profile) : await saveOrcamento(input, profile)
       toast.success(`Orçamento ${formatOrcamentoNumero(saved.numero)} salvo.`)
       navigate(viewAfterSave ? `/orcamentos/${saved.id}` : `/orcamentos/${saved.id}/editar`)
     } catch (err) {
@@ -289,6 +293,7 @@ export function OrcamentoEditor({ existing }: Props) {
               Status
               <select
                 value={draft.status}
+                disabled={Boolean(ticketId)}
                 onChange={(event) => setDraft({ ...draft, status: event.target.value as OrcamentoStatus })}
               >
                 <option value="rascunho">Rascunho</option>

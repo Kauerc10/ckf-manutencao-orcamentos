@@ -5,6 +5,7 @@ import { systemSettingsSchema } from '../lib/validations'
 import { useAuthStore } from '../stores/authStore'
 import { useSystemSettingsStore } from '../stores/systemSettingsStore'
 import type { SystemSettings } from '../types'
+import { formatClienteDocumento } from '../lib/clientes'
 
 function cloneSettings(settings: SystemSettings): SystemSettings {
   return {
@@ -196,7 +197,7 @@ export function Configuracoes() {
             </div>
             <div>
               <dt>CNPJ</dt>
-              <dd>{form.empresa.cnpj}</dd>
+              <dd>{formatClienteDocumento(form.empresa.cnpj)}</dd>
             </div>
             <div>
               <dt>Telefone</dt>
@@ -207,6 +208,9 @@ export function Configuracoes() {
               <dd>{form.empresa.regiao}</dd>
             </div>
           </dl>
+          <footer className="settings-attribution">
+            <ruon-badge project="ckf-orcamentos" theme="light" size="sm"></ruon-badge>
+          </footer>
         </aside>
       </div>
     </section>

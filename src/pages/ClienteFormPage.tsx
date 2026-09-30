@@ -96,11 +96,11 @@ function draftFromCliente(cliente: Cliente): ClienteDraft {
 
 type DraftField = keyof ClienteDraft
 
-export function ClienteFormPage() {
+export function ClienteFormPage({ initial, returnTo }: { initial?: Partial<ClienteDraft>; returnTo?: string } = {}) {
   const { id } = useParams()
   const navigate = useNavigate()
   const profile = useAuthStore((state) => state.profile)
-  const [draft, setDraft] = useState<ClienteDraft>(emptyDraft)
+  const [draft, setDraft] = useState<ClienteDraft>(() => ({...emptyDraft(),...initial}))
   const [tagsInput, setTagsInput] = useState('')
   const [loading, setLoading] = useState(Boolean(id))
   const [saving, setSaving] = useState(false)
@@ -390,6 +390,11 @@ export function ClienteFormPage() {
       return
     }
 
+    if (returnTo && !/^[A-Z]{2}$/.test(result.data.uf)) {
+      toast.error('Complete a UF do cliente antes de continuar o atendimento.')
+      return
+    }
+
     if (!skipAddressWarning && !hasClienteAddress(result.data)) {
       setShowAddressWarning(true)
       return
@@ -399,7 +404,7 @@ export function ClienteFormPage() {
     try {
       const saved = await saveCliente({ ...result.data, id }, profile)
       toast.success('Cliente salvo.')
-      navigate(`/clientes/${saved.id}`)
+      navigate(returnTo ? `${returnTo}?clienteId=${saved.id}` : `/clientes/${saved.id}`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar cliente.')
     } finally {
@@ -421,7 +426,7 @@ export function ClienteFormPage() {
           <div>
             <h2>{id ? 'Editar cliente' : 'Novo cliente'}</h2>
           </div>
-          <Link className="secondary-button" to={id ? `/clientes/${id}` : '/clientes'}>
+          <Link className="secondary-button" to={returnTo ?? (id ? `/clientes/${id}` : '/clientes')}>
             <ArrowLeft size={16} />
             Voltar
           </Link>
