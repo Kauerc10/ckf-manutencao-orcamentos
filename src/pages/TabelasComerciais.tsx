@@ -10,6 +10,7 @@ import { formatCurrency, formatDateTimeBR, sanitizeFilePart } from '../lib/forma
 import type { Servico, Tabela, TabelaRevisao } from '../types/comercial'
 import { toTabelaDocument, type TabelaDocument } from '../lib/tabela-document'
 import { TabelaPreview } from '../components/TabelaPreview'
+import { formatClienteDocumento } from '../lib/clientes'
 
 export function TabelasComerciais() {
   const profile = useAuthStore((s) => s.profile)
@@ -126,7 +127,7 @@ export function TabelasComerciais() {
                     <tbody>
                       {tabelas.map((t) => (
                         <tr key={t.id}>
-                          <td><strong>{t.empresa.nome}</strong></td>
+                          <td><strong>{t.empresa.nome}</strong><small>{formatClienteDocumento(t.empresa.documento)}</small></td>
                           <td>
                             {t.titulo}
                             <small>Versão {t.versao} · {t.itens.length} {t.itens.length === 1 ? 'serviço' : 'serviços'}</small>
@@ -159,7 +160,7 @@ export function TabelasComerciais() {
                     </span>
                     <h3>{selected.titulo}</h3>
                     <p>
-                      {selected.empresa.nome} · {selected.empresa.documento}
+                      {selected.empresa.nome} · {formatClienteDocumento(selected.empresa.documento)}
                     </p>
                     <small>
                       {formatDateTimeBR(selected.criadoEm)} · {selected.autorNome}

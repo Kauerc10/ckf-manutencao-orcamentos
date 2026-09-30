@@ -3263,13 +3263,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .service-price-example { display:block; color:var(--muted); font-size:12px; font-weight:400; line-height:1.5; }
 .service-price-error { color:var(--danger); }
 .service-editor input[aria-invalid="true"] { border-color:var(--danger); }
-.service-unit-guide { border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:11px 0; }
-.service-unit-guide summary { width:fit-content; cursor:pointer; color:var(--ink); font-size:12px; font-weight:600; }
-.service-unit-guide summary:hover { text-decoration:underline; text-underline-offset:3px; }
-.service-unit-guide summary:focus-visible { outline:2px solid var(--accent-2); outline-offset:4px; }
-.service-unit-guide > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 20px; padding:14px 0 3px; }
-.service-unit-guide p { margin:0; color:var(--muted); font-size:12px; line-height:1.5; }
-.service-unit-guide b { color:var(--ink); }
 .service-editor .form-footer { justify-content:flex-end; }
 .service-editor .form-footer .form-note { margin-right:auto; }
 .commercial-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
@@ -3287,7 +3280,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .commercial-table strong { display:block; }
 .service-scope { max-width:450px; margin:7px 0 0; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--muted); }
 .money-cell { white-space:nowrap; font-variant-numeric:tabular-nums; }
-.service-image { width:60px; height:52px; object-fit:contain; background:white; border:1px solid var(--border); border-radius:4px; }
+.service-image { width:104px; height:80px; flex:none; object-fit:contain; padding:6px; background:white; border:1px solid var(--border); border-radius:4px; }
+.service-editor .service-image { width:200px; height:150px; }
+.document-service { display:flex; align-items:flex-start; gap:16px; }
+.document-service > div { min-width:0; flex:1; }
+.document-service .service-image { width:144px; height:108px; background:#f5f6f7; }
+.settings-attribution { display:flex; align-items:center; justify-content:center; margin-top:24px; padding-top:20px; border-top:1px solid var(--border); }
+.settings-attribution ruon-badge { max-width:100%; }
 .service-identity { display:flex; gap:12px; align-items:center; min-width:160px; }
 .commercial-empty { padding:48px 20px; text-align:center; color:var(--muted); }
 .commercial-empty svg { color:var(--accent-2); }

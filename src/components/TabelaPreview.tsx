@@ -3,6 +3,7 @@ import { formatCurrency, formatDateTimeBR } from '../lib/formatters'
 import type { TabelaDocument } from '../lib/tabela-document'
 import type { SystemSettings } from '../types'
 import { ServicoImagem } from './ServicoImagem'
+import { formatClienteDocumento } from '../lib/clientes'
 export function TabelaPreview({ document, settings }: { document: TabelaDocument; settings: SystemSettings }) {
   return (
     <div className="commercial-document">
@@ -16,7 +17,7 @@ export function TabelaPreview({ document, settings }: { document: TabelaDocument
           {settings.empresa.email} · {settings.empresa.telefone}
         </p>
         <p>
-          CNPJ {settings.empresa.cnpj} · {settings.empresa.regiao}
+          CNPJ {formatClienteDocumento(settings.empresa.cnpj)} · {settings.empresa.regiao}
         </p>
       </header>
       <div className="commercial-document-body">
@@ -24,7 +25,7 @@ export function TabelaPreview({ document, settings }: { document: TabelaDocument
         <p>
           {document.tipo === 'catalogo'
             ? 'Preços padrão por unidade de cobrança'
-            : `${document.empresa.nome} · ${document.empresa.documento}`}
+            : `${document.empresa.nome} · ${formatClienteDocumento(document.empresa.documento)}`}
         </p>
         {[...new Set(document.itens.map((i) => i.categoria))].map((c) => (
           <section key={c}>
@@ -46,9 +47,13 @@ export function TabelaPreview({ document, settings }: { document: TabelaDocument
                       <tr key={i.codigo}>
                         <td>{i.codigo}</td>
                         <td>
-                          <strong>{i.nome}</strong>
-                          <p className="service-scope">{i.escopo}</p>
-                          {i.imagem && <ServicoImagem path={i.imagem} nome={i.nome} />}
+                          <div className="document-service">
+                            {i.imagem && <ServicoImagem path={i.imagem} nome={i.nome} />}
+                            <div>
+                              <strong>{i.nome}</strong>
+                              <p className="service-scope">{i.escopo}</p>
+                            </div>
+                          </div>
                         </td>
                         <td>{i.unidade}</td>
                         <td className="money-cell">{formatCurrency(i.preco)}</td>

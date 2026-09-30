@@ -2,6 +2,7 @@ import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/render
 import { formatCurrency, formatDateTimeBR } from '../../lib/formatters'
 import type { TabelaDocument } from '../../lib/tabela-document'
 import type { CompanySettings } from '../../types'
+import { formatClienteDocumento } from '../../lib/clientes'
 const styles = StyleSheet.create({
   page: {
     paddingTop: 26,
@@ -39,7 +40,9 @@ const styles = StyleSheet.create({
   },
   name: { fontWeight: 700, marginBottom: 4 },
   scope: { fontSize: 8, lineHeight: 1.35, color: '#3f4854' },
-  image: { width: 65, height: 48, objectFit: 'contain', marginTop: 6 },
+  serviceContent: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  serviceText: { flex: 1 },
+  image: { width: 100, height: 80, objectFit: 'contain', backgroundColor: '#f5f6f7' },
   footer: {
     position: 'absolute',
     bottom: 22,
@@ -97,7 +100,7 @@ export function TabelaPDF({
             {empresa.email} · {empresa.telefone}
           </Text>
           <Text style={styles.contact}>
-            CNPJ {empresa.cnpj} · {empresa.regiao}
+            CNPJ {formatClienteDocumento(empresa.cnpj)} · {empresa.regiao}
           </Text>
         </View>
         <View fixed style={styles.heading}>
@@ -105,7 +108,7 @@ export function TabelaPDF({
           <Text>
             {document.tipo === 'catalogo'
               ? 'Preços padrão por unidade de cobrança'
-              : `${document.empresa.nome} · ${document.empresa.documento}`}
+              : `${document.empresa.nome} · ${formatClienteDocumento(document.empresa.documento)}`}
           </Text>
         </View>
         <View fixed style={styles.columns}>
@@ -126,9 +129,13 @@ export function TabelaPDF({
                   <View key={`${i.codigo}-${index}`} style={styles.row} wrap={false}>
                     <Text style={styles.code}>{i.codigo}</Text>
                     <View style={styles.service}>
-                      <Text style={styles.name}>{index ? `${i.nome} (continuação)` : i.nome}</Text>
-                      <Text style={styles.scope}>{parte}</Text>
-                      {index === 0 && i.imagem && <Image src={i.imagem} style={styles.image} />}
+                      <View style={styles.serviceContent}>
+                        {index === 0 && i.imagem && <Image src={i.imagem} style={styles.image} />}
+                        <View style={styles.serviceText}>
+                          <Text style={styles.name}>{index ? `${i.nome} (continuação)` : i.nome}</Text>
+                          <Text style={styles.scope}>{parte}</Text>
+                        </View>
+                      </View>
                     </View>
                     <Text style={styles.unit}>{i.unidade}</Text>
                     <Text style={styles.price}>{index ? '—' : formatCurrency(i.preco)}</Text>

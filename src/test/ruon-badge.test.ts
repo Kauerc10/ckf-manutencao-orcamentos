@@ -6,6 +6,7 @@ describe('RUON Badge Integration', () => {
   const rootDir = path.resolve(__dirname, '../..')
   const indexHtmlPath = path.join(rootDir, 'index.html')
   const appLayoutPath = path.join(rootDir, 'src/components/layout/AppLayout.tsx')
+  const settingsPath = path.join(rootDir, 'src/pages/Configuracoes.tsx')
 
   it('includes https://ruon.dev/badge.js in index.html', () => {
     expect(fs.existsSync(indexHtmlPath)).toBe(true)
@@ -14,15 +15,11 @@ describe('RUON Badge Integration', () => {
     expect(indexHtml).toMatch(/<script\s+src="https:\/\/ruon\.dev\/badge\.js"\s+async><\/script>/)
   })
 
-  it('contains ruon-badge with project="ckf-orcamentos", theme="dark", and size="sm" in AppLayout.tsx', () => {
+  it('keeps the RUON attribution in settings and out of the sidebar', () => {
     expect(fs.existsSync(appLayoutPath)).toBe(true)
     const appLayout = fs.readFileSync(appLayoutPath, 'utf-8')
-    expect(appLayout).toContain('<ruon-badge')
-    expect(appLayout).toContain('project="ckf-orcamentos"')
-    expect(appLayout).toContain('theme="dark"')
-    expect(appLayout).toContain('size="sm"')
-    expect(appLayout).toMatch(
-      /<ruon-badge[\s\S]*?project="ckf-orcamentos"[\s\S]*?theme="dark"[\s\S]*?size="sm"[\s\S]*?>[\s\S]*?<\/ruon-badge>/,
-    )
+    const settings = fs.readFileSync(settingsPath, 'utf-8')
+    expect(appLayout).not.toContain('<ruon-badge')
+    expect(settings).toContain('<ruon-badge project="ckf-orcamentos" theme="light" size="sm">')
   })
 })

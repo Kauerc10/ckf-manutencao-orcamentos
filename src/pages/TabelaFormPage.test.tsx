@@ -113,7 +113,7 @@ describe('TabelaFormPage', () => {
       expect(screen.getByRole('heading', { name: 'Nova tabela' })).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Empresa Alfa Ltda')).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /Empresa Alfa Ltda/ })).toBeInTheDocument()
     expect(screen.getByText('Soldagem TIG')).toBeInTheDocument()
     expect(screen.getByText('CKF-00001 · Soldagem')).toBeInTheDocument()
 

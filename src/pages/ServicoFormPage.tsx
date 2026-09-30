@@ -188,23 +188,6 @@ export function ServicoFormPage() {
             </output>
           </label>
         </div>
-        <details className="service-unit-guide">
-          <summary>Ver exemplos de cobrança por unidade</summary>
-          <div>
-            <p>
-              <b>Unidade:</b> R$ 250 por peça; 3 peças custam R$ 750.
-            </p>
-            <p>
-              <b>Hora:</b> R$ 180 por hora; 3 horas custam R$ 540.
-            </p>
-            <p>
-              <b>Metro:</b> R$ 80 por metro; 3 metros custam R$ 240.
-            </p>
-            <p>
-              <b>Serviço:</b> valor fechado para o escopo descrito.
-            </p>
-          </div>
-        </details>
         <div className="commercial-fields">
           <label className="commercial-wide">
             Imagem (opcional)

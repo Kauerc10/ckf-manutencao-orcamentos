@@ -8,6 +8,7 @@ import { formatCurrency, parseLocalizedNumber } from '../lib/formatters'
 import { ajustarPreco, diferencaPreco } from '../lib/precos'
 import { useAuthStore } from '../stores/authStore'
 import type { Servico, Tabela, TabelaDraft } from '../types/comercial'
+import { formatClienteDocumento } from '../lib/clientes'
 
 function PriceEditor({
   servico,
@@ -192,6 +193,7 @@ export function TabelaFormPage() {
             <p className="table-form-company">
               <span>Empresa</span>
               <strong>{current?.empresa.nome}</strong>
+              <small>{formatClienteDocumento(current?.empresa.documento ?? '')}</small>
               <small>Versão atual {current?.versao}</small>
             </p>
           ) : (
@@ -200,7 +202,7 @@ export function TabelaFormPage() {
               <select required value={draft.empresaId} onChange={(event) => setDraft({ ...draft, empresaId: event.target.value })}>
                 <option value="">Selecione uma empresa</option>
                 {availableCompanies.map((client) => (
-                  <option key={client.id} value={client.id}>{client.nome}</option>
+                  <option key={client.id} value={client.id}>{client.nome} · {formatClienteDocumento(client.documento)}</option>
                 ))}
               </select>
             </label>
